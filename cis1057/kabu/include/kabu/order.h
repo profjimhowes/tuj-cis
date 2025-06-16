@@ -6,10 +6,10 @@
 typedef uint32_t OrderId;
 
 typedef enum {
-    PENDING,
-    OPEN,
-    CANCELLED,
-    COMPLETE
+    STATUS_PENDING,
+    STATUS_OPEN,
+    STATUS_CANCELLED,
+    STATUS_COMPLETE
 } OrderStatus;
 
 typedef enum {
