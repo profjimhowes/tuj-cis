@@ -47,12 +47,10 @@ typedef struct {
  * @brief Result of processing an order in the market
  */
 typedef struct {
-    bool success;            /**< Whether order was processed successfully */
     int filled_quantity;     /**< Amount of order that was filled */
-    int average_price;       /**< Average execution price */
-    Trade* trades;           /**< Array of resulting trades */
+    int filled_value;        /**< Total value of filled quantity */
     int trade_count;         /**< Number of trades generated */
-    char error_message[256]; /**< Error description if success is false */
+    Fill fills[];            /**< Array of resulting fills */
 } OrderResult;
 
 /**

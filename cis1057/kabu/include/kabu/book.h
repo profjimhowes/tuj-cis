@@ -14,41 +14,28 @@
 #include <stdbool.h>
 
 /**
- * @brief Maximum number of price levels in a single order book side
- */
-#define MAX_PRICE_LEVELS 1000
-
-/**
- * @brief Maximum number of orders at a single price level
- */
-#define MAX_ORDERS_PER_LEVEL 100
-
-/**
- * @brief Liquidity entry representing an order at a specific price level
+ * @brief Liquidity entry representing quantity available from a maker order
  * 
- * Each liquidity entry tracks a portion of an order that exists at a
- * particular price level. Multiple entries can exist for the same order
- * if it's partially filled across different price levels.
+ * Each liquidity entry tracks the unfilled portion of a live maker order.
  */
 typedef struct {
     OrderId order_id;    /**< ID of the order this liquidity belongs to */
-    int quantity;        /**< Amount of liquidity at this price level */
-    time_t timestamp;    /**< When this liquidity was added */
-} LiquidityEntry;
+    int quantity;        /**< Amount of liquidity remaining */
+} Liquidity;
 
 /**
  * @brief Price level containing all orders at a specific price
  * 
  * The order book is organized by price levels, where each level contains
- * all the liquidity (orders) available at that price. Orders within a
- * price level are prioritized by time (first in, first out).
+ * all the liquidity (unfilled orders) available at that price. Liquidity
+ * within a price level is ordered as a queue (first in, first out).
  */
 typedef struct {
-    int price;                        /**< Price in cents for this level */
-    int total_quantity;               /**< Total quantity available at this price */
-    LiquidityEntry* entries;          /**< Array of liquidity entries */
-    int entry_count;                  /**< Number of active entries */
-    int entry_capacity;               /**< Maximum entries this level can hold */
+    int price;                    /**< Price in cents for this level */
+    int total_quantity;           /**< Total quantity available at this price */
+    int count;                    /**< Number of active entries */
+    int capacity;                 /**< Maximum entries this level can hold */
+    Liquidity liquidity[];        /**< Array of liquidity entries */
 } PriceLevel;
 
 /**
@@ -65,17 +52,6 @@ typedef struct {
     int level_capacity;     /**< Maximum price levels this book can hold */
     bool is_bid_side;       /**< True for bid book, false for ask book */
 } OrderBook;
-
-/**
- * @brief Trade execution result
- */
-typedef struct {
-    OrderId buyer_id;       /**< Order ID of the buyer */
-    OrderId seller_id;      /**< Order ID of the seller */
-    int quantity;           /**< Amount traded */
-    int price;              /**< Execution price */
-    time_t timestamp;       /**< When trade occurred */
-} Trade;
 
 /**
  * @brief Create a new empty order book

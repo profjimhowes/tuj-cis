@@ -49,25 +49,18 @@ typedef enum {
 } OrderStatus;
 
 /**
- * @brief Order type defining execution behavior
- */
-typedef enum {
-    ORDER_TYPE_MARKET, /**< Execute immediately at best available price */
-    ORDER_TYPE_LIMIT,  /**< Execute only at specified price or better */
-    ORDER_TYPE_STOP    /**< Convert to market order when price reached */
-} OrderType;
-
-/**
- * @brief Liquidity classification for fee calculation
+ * @brief Order flags for execution behavior
  * 
  * Orders are classified based on whether they add or remove liquidity
- * from the order book, affecting trading fees.
+ * from the order book. Market orders only remove liquidity, while
+ * post-only limit orders only add liquidity. Regular limit orders may
+ * both add and remove liquidity depending on the execution price.
  */
 typedef enum {
-    LIQUIDITY_MAKER,       /**< Order adds liquidity to book */
-    LIQUIDITY_TAKER,       /**< Order removes liquidity from book */
-    LIQUIDITY_MAKER_TAKER  /**< Order both adds and removes liquidity */
-} OrderLiquidity;
+    LIQUIDITY_TAKER     = 1 << 0,   /**< Order may remove liquidity from book */
+    IMMEDIATE_OR_CANCEL = 1 << 1,   /**< Order is filled immediately or canceled */
+    ALL_OR_NONE         = 1 << 2,   /**< Order is filled completely or canceled */
+} OrderFlags;
 
 /**
  * @brief Core order structure containing all order information
@@ -79,14 +72,12 @@ typedef struct {
     OrderId id;                /**< Unique order identifier */
     UserId user_id;            /**< ID of user who placed order */
     char ticker[32];           /**< Trading pair symbol (e.g., "BTC/USD") */
-    OrderSide side;            /**< Buy or sell */
-    OrderType type;            /**< Market, limit, or stop order */
-    int quantity;              /**< Number of shares/units to trade */
-    int filled_quantity;       /**< Amount already filled */
-    int price;                 /**< Price in cents (limit/stop orders) */
-    int stop_price;            /**< Trigger price for stop orders */
+    char execution_flags;      /**< Order execution behavior flags */
+    int32_t total_quantity;    /**< Number of shares/units to trade */
+    int32_t unfilled_quantity; /**< Amount remaining to be filled */
+    uint32_t price;            /**< Price (limit orders) */
+    uint32_t trigger_price;    /**< Trigger price for e.g. stop orders */
     OrderStatus status;        /**< Current order status */
-    OrderLiquidity liquidity;  /**< Liquidity classification */
     time_t created_time;       /**< When order was created */
     time_t updated_time;       /**< Last modification time */
 } Order;
