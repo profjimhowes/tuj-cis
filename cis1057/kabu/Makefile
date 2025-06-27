@@ -42,11 +42,11 @@ test-market: $(BINDIR)/test_market
 	$(BINDIR)/test_market
 
 # Test executables
-$(BINDIR)/test_order: tests/test_order.c | $(BINDIR)
+$(BINDIR)/test_order: test/test_order.c | $(BINDIR)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BINDIR)/test_book: tests/test_book.c | $(BINDIR)
+$(BINDIR)/test_book: test/test_book.c | $(BINDIR)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BINDIR)/test_market: tests/test_market.c | $(BINDIR)
+$(BINDIR)/test_market: test/test_market.c | $(BINDIR)
 	$(CC) $(CFLAGS) $< -o $@
