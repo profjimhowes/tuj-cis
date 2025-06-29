@@ -4,6 +4,13 @@ The educational goal of the project is to expose intro-level programming student
 
 # Architecture
 The key goal is extensibility, so the entire game engine from top-to-bottom will be designed in accordance with proven object-oriented patterns.
+## Object base system
+Classes are essentially factories: they define how to construct values of a particular data type, also known as objects.
+Protocols define polymorphic functions, which can include default or derived implementations.
+An interface is basically a collection of protocols.
+### Inheritance as extension
+Since object representations are opaque, inheritance requires that objects of a subclass are constructed as extensions to the structure of the superclass.
+Metaclasses, in Schreiner's formulation, are basically class prototypes. 
 
 # Components
 ## Game state management
