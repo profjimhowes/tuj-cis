@@ -2,70 +2,44 @@
 
 /* Representations */
 
-typedef struct {
+typedef struct Object {
     const struct Class *class;
 } Object_t;
 
-typedef struct Class {
-    const Object_t _;
+typedef struct Type {
+    const Object_t *_;
     const char *name;
-    const struct Class *super;
+    const struct Type *super;
     size_t size;
     void *(*init)(void *self, va_list *app);
-} Class_t;
+} Type_t;
 
-// Invokes the construct protocol
-void *new(const void *class, ...) {
-    const Class_t *cp = class;
-    assert(cp && cp->size);
+typedef struct Class {
+    const Object_t *base;
+    const Behavior_t *interface;
+} Class_t
 
-    Object_t *object = calloc(1, cp->size);
+void *new(const Allocator_t *mem, const void *class, ...) {
+    const Type_t *cp = class;
+    Object_t *object = mem->alloc(cp->size);
     assert(object);
 
     va_list ap;
     va_start(ap, class);
     object->class = cp;
-    object = construct(object, &ap);
+    object = init(object, &ap);
     va_end(ap);
     return object;
 }
 
-// Invokes the destruct protocol
-void delete(void *self) {
-    if (self) free(destruct(self));
+void *init(void *self, va_list *app) {
+    const Type_t *type = typeof(self);
+    return type->init(self, app);
 }
 
-// Construction protocol, implemented by all classes automatically
-void *construct(void *self, va_list *app) {
-    const Class_t *class = getClass(self);
-    assert(class->super);
-    if (class != class->super) {
-        (Object_t *)self->class = class->super;             // hard cast to super class
-        self = class->construct(construct(self, app), app); // construct recursively
-    } else self = class->construct(self, app);
-    assert(self);
-    (Object_t *)self->class = class; // restore class
-    return self;
-}
-
-// Destruction protocol, implemented by all classes automatically
-void *destruct(void *self) {
-    const Class_t *class = getClass(self);
-    assert(class->destruct);
-    self = class->destruct(self);
-
-    assert(class->super);
-    if (class != class->super) {
-        (Object_t *)self->class = class->super;
-    }
-}
-
-// Universal protocol, implemented by all classes automatically
-bool equals(const void *self, const void *other) {
-    if (self == other) return true;
-    const Class_t * const *cp = self;
-    assert(self && *cp && (*cp)->equals);
-    return (*cp)->equals(self, other);
+// Equality protocol, has default (universal) implementation
+bool _equals(const void *self, const void *other) {
+    return self == other;
 }
 
 const void *getClass(const void *self) {
@@ -109,15 +83,15 @@ struct Protocol {
     const Class_t _; // extends Class
 }
 
-/* Object methods */
+/* Default initializer */
 
-static void *Object_construct(void *self, va_list *app) {
+static void *_init(void *self, va_list *app) {
     return self;
 }
 
 /* Class methods */
 
-static void *Class_construct(void *_self, va_list *app) {
+static void *Class_init(void *_self, va_list *app) {
     Class_t *self = _self;
     self->name = va_arg(*app, char *);
     assert(self->super = va_arg(*app, Class_t *));
@@ -141,18 +115,19 @@ static void *Class_construct(void *_self, va_list *app) {
     }
 }
 
-/* Static initialization of Object and Class */
-static const Class_t object[] = {
+/* Static initialization of God and Class */
+static const Class_t god[] = {
     {
-        {object + 1},
-        "Object", NULL, sizeof(Object_t),
-        Object_construct, Object_destruct, Object_equals
+        {god + 1},
+        "God", god, sizeof(God_t),
+        _construct, _equals
     },
     {
-        {object + 1},
-        "Class", object, sizeof(Class_t),
-        Class_construct, Class_destruct, Object_equals
-    }
+        {god + 1},
+        "Class", god, sizeof(Class_t),
+        Class_construct, _equals
+    },
+
 };
-const void *Object = object;        // description of Object class
-const void *Class = object + 1;     // description of Class class
+const void *God = god;          // description of God class
+const void *Class = god + 1;    // description of Class class
