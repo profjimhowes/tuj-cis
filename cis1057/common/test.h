@@ -31,21 +31,21 @@ extern int tests_failed;
     tests_run = 0; \
     tests_passed = 0; \
     tests_failed = 0; \
-    printf("Starting tests...\n\n"); \
+    puts("Starting tests...\n"); \
 } while(0)
 
 /**
  * @brief Print final test results
  */
 #define TEST_SUMMARY() do { \
-    printf("\n=== Test Summary ===\n"); \
+    puts("\n=== Test Summary ==="); \
     printf("Tests run: %d\n", tests_run); \
     printf(COLOR_GREEN "Passed: %d" COLOR_RESET "\n", tests_passed); \
     printf(COLOR_RED "Failed: %d" COLOR_RESET "\n", tests_failed); \
     if (tests_failed == 0) { \
-        printf(COLOR_GREEN "All tests passed!" COLOR_RESET "\n"); \
+        puts(COLOR_GREEN "All tests passed!" COLOR_RESET); \
     } else { \
-        printf(COLOR_RED "Some tests failed." COLOR_RESET "\n"); \
+        puts(COLOR_RED "Some tests failed." COLOR_RESET); \
     } \
 } while(0)
 
@@ -65,7 +65,7 @@ extern int tests_failed;
     } else { \
         tests_failed++; \
         printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        printf("  Expected: true, Got: false\n"); \
+        puts("  Expected: true, Got: false"); \
     } \
 } while(0)
 
@@ -80,7 +80,7 @@ extern int tests_failed;
     } else { \
         tests_failed++; \
         printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        printf("  Expected: false, Got: true\n"); \
+        puts("  Expected: false, Got: true"); \
     } \
 } while(0)
 
@@ -140,7 +140,7 @@ extern int tests_failed;
     } else { \
         tests_failed++; \
         printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        printf("  Expected: non-NULL pointer, Got: NULL\n"); \
+        puts("  Expected: non-NULL pointer, Got: NULL"); \
     } \
 } while(0)
 
@@ -155,7 +155,7 @@ extern int tests_failed;
     } else { \
         tests_failed++; \
         printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        printf("  Expected: NULL pointer, Got: non-NULL\n"); \
+        puts("  Expected: NULL pointer, Got: non-NULL"); \
     } \
 } while(0)
 
