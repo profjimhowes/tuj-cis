@@ -1,20 +1,64 @@
-#include "object.h"
+/**
+ * @file Allocator.c
+ * @brief Minimal implementation of Allocator to pass creation tests
+ * 
+ * This implementation creates a valid allocator but still fails
+ * allocation tests to demonstrate incremental TDD progress.
+ */
 
-typedef struct {
-    const Class_t _;
-    void *(*alloc)(const void *self, const Class_t *);
-} Preallocator_t;
+#include "../include/Allocator.h"
+#include <stdlib.h>
+#include <stddef.h>
 
-struct GodAllocator {
-    const Object_t _;
-    // ...anything else?
+/**
+ * @brief Minimal allocator structure with basic state
+ */
+struct Allocator {
+    size_t used;  /* Track bytes allocated */
 };
 
-typedef struct {
-    const Preallocator_t _;
-    void *(*dealloc)(const void *self, Object_t *obj);
-} Allocator_t;
+Allocator *Allocator_new(void)
+{
+    /* Allocate memory for the allocator structure */
+    Allocator* alloc = malloc(sizeof(Allocator));
+    if (alloc) {
+        alloc->used = 0;  /* Initialize to zero usage */
+    }
+    return alloc;
+}
 
-struct HeapAllocator {
-    const Object_t _;
+void Allocator_free(Allocator *allocator)
+{
+    /* Free the allocator structure (handles NULL gracefully) */
+    free(allocator);
+}
+
+void *Allocator_push(Allocator *allocator, size_t size)
+{
+    /* Return NULL to fail all allocation tests */
+    (void)allocator;
+    (void)size;
+    return NULL;
+}
+
+void Allocator_pop(Allocator *allocator, size_t size)
+{
+    /* Do nothing to fail stack behavior tests */
+    (void)allocator;
+    (void)size;
+}
+
+void Allocator_clear(Allocator *allocator)
+{
+    /* Do nothing to fail clear tests */
+    (void)allocator;
+}
+
+size_t Allocator_used(Allocator *allocator)
+{
+    /* Return actual usage or 0 for NULL */
+    if (!allocator) {
+        return 0;
+    }
+    return allocator->used;
 }
