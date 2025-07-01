@@ -4,13 +4,29 @@ The educational goal of the project is to expose intro-level programming student
 
 # Architecture
 The key goal is extensibility, so the entire game engine from top-to-bottom will be designed in accordance with proven object-oriented patterns.
+
 ## Object base system
-Classes are essentially factories: they define how to construct values of a particular data type, also known as objects.
-Protocols define polymorphic functions, which can include default or derived implementations.
-An interface is basically a collection of protocols.
-### Inheritance as extension
-Since object representations are opaque, inheritance requires that objects of a subclass are constructed as extensions to the structure of the superclass.
-Metaclasses, in Schreiner's formulation, are basically class prototypes. 
+Data types are defined by structs. Inheritance of data types is implied by struct extension.
+
+### Behaviors vs Protocols
+The system distinguishes between two types of polymorphic interfaces:
+
+**Behaviors** represent a coherent stateful interface that naturally belongs to a data type (essentially an abstract class). Core methods that are intrinsic to a type are stored in the class's function table, enabling fast dispatch via `object->class->vtable->method`. Examples include `move()` on a `Piece` or `draw()` on a `Card`.
+
+**Protocols** define cross-cutting interfaces that multiple unrelated types can implement. Protocol dispatch occurs by looking up implementations registered on the protocol object itself: `protocol->implementations[type]->function`. This allows unrelated types to implement the same protocol (e.g., `Serializable` implemented by `GameState`, `Player`, and `Board`) and enables adding new protocols to existing types without modifying their class definitions.
+
+### Memory Management
+The system uses arena allocation to manage object lifetimes hierarchically:
+- **Program arena**: Core type system objects (classes, protocols) that live for the program duration
+- **Session arena**: Game-specific objects that live for a game session
+- **Turn arena**: Temporary objects that live for a single turn
+- **Temp arena**: Scratch objects for immediate use
+
+This eliminates the need for destructors since object cleanup is handled automatically when arenas are reset.
+
+### Core Architecture
+Instances of an abstract class are concrete classes, and the constructor of the abstract class describes how to construct concrete classes.
+The Class data type extends Type by implementing behaviors.
 
 # Components
 ## Game state management
