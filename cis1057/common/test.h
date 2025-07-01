@@ -1,14 +1,14 @@
 /**
  * @file test.h
- * @brief Simple testing framework for Teban project
+ * @brief Simple testing framework for CIS 1057 projects
  * 
  * This header provides basic testing macros for unit testing.
  * It's designed to be lightweight and easy to understand for
  * introductory C programming students.
  */
 
-#ifndef TEBAN_TEST_H
-#define TEBAN_TEST_H
+#ifndef TEST_H
+#define TEST_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,4 +159,4 @@ extern int tests_failed;
     } \
 } while(0)
 
-#endif /* TEBAN_TEST_H */
+#endif /* TEST_H */
