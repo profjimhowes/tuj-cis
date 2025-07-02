@@ -5,6 +5,17 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c99 -pedantic -g
 INCLUDES = -Iinclude -I../
 
+# Detect OS for cross-platform commands
+ifeq ($(OS),Windows_NT)
+    MKDIR = if not exist "$@" mkdir "$@"
+    RMDIR = if exist "$(1)" rmdir /s /q "$(1)"
+    RM = del /q
+else
+    MKDIR = mkdir -p $@
+    RMDIR = rm -rf $(1)
+    RM = rm -f
+endif
+
 # Source and object directories
 SRCDIR = src
 TESTDIR = test
@@ -24,7 +35,7 @@ all: $(TEST_BINARIES)
 
 # Create directories
 $(OBJDIR) $(BINDIR):
-	mkdir -p $@
+	$(MKDIR)
 
 # Compile source files to objects
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
@@ -48,7 +59,8 @@ test: $(TEST_BINARIES)
 
 # Clean build artifacts
 clean:
-	rm -rf $(OBJDIR) $(BINDIR)
+	$(call RMDIR,$(OBJDIR))
+	$(call RMDIR,$(BINDIR))
 
 # Phony targets
 .PHONY: all test test-allocator clean
