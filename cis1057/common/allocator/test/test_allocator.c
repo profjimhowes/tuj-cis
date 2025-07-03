@@ -47,11 +47,11 @@ static int test_allocator_creation(void)
         ASSERT_EQ(0, Allocator_used(alloc), "New allocator should have zero usage");
         
         /* Test destruction with valid allocator */
-        Allocator_free(alloc);
+        free(alloc);
     }
     
     /* Test destruction with NULL allocator */
-    Allocator_free(NULL);
+    free(NULL);
     /* No assertion needed - should handle NULL gracefully */
     
     printf("\n");
@@ -105,7 +105,7 @@ static int test_basic_allocation(void)
         }
     }
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
     return (tests_passed > initial_passed && ptr1 != NULL);
 }
@@ -140,7 +140,7 @@ static void test_allocation_alignment(void)
         }
     }
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
 }
 
@@ -179,7 +179,7 @@ static void test_stack_behavior(void)
     ASSERT_NOT_NULL(ptr4, "Allocation after pop should succeed");
     ASSERT_EQ(50, Allocator_used(alloc), "Usage should reflect new allocation");
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
 }
 
@@ -217,7 +217,7 @@ static void test_clear_functionality(void)
     Allocator_clear(alloc);
     ASSERT_EQ(0, Allocator_used(alloc), "Multiple clears should be safe");
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
 }
 
@@ -255,7 +255,7 @@ static void test_usage_tracking(void)
     ASSERT_EQ(total_expected, Allocator_used(alloc), 
               "Usage should continue tracking correctly");
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
 }
 
@@ -296,7 +296,7 @@ static void test_error_conditions(void)
     ASSERT_TRUE(ptr != NULL || Allocator_used(alloc) == 0, 
                 "Large allocation should be handled gracefully");
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
 }
 
@@ -338,7 +338,7 @@ static void test_memory_patterns(void)
         ASSERT_EQ(i * i, buffer2[i], "Second buffer should contain correct values");
     }
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
 }
 
@@ -380,7 +380,7 @@ static void test_performance_characteristics(void)
     void* ptr = Allocator_push(alloc, 1024);
     ASSERT_NOT_NULL(ptr, "Allocation after clear should succeed");
     
-    Allocator_free(alloc);
+    free(alloc);
     printf("\n");
 }
 
