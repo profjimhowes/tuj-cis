@@ -23,6 +23,11 @@ extern int tests_failed;
 #define COLOR_GREEN "\033[32m"
 #define COLOR_RED   "\033[31m"
 #define COLOR_RESET "\033[0m"
+#define COLOR_TEXT(color, message) color message COLOR_RESET
+#define GREEN_TEXT(message) COLOR_TEXT(COLOR_GREEN, message)
+#define RED_TEXT(message) COLOR_TEXT(COLOR_RED, message)
+#define PASS(message) printf(GREEN_TEXT("PASS") ": %s\n", message)
+#define FAIL(message) printf(RED_TEXT("FAIL") ": %s\n", message)
 
 /**
  * @brief Initialize test framework
@@ -40,12 +45,12 @@ extern int tests_failed;
 #define TEST_SUMMARY() do { \
     puts("\n=== Test Summary ==="); \
     printf("Tests run: %d\n", tests_run); \
-    printf(COLOR_GREEN "Passed: %d" COLOR_RESET "\n", tests_passed); \
-    printf(COLOR_RED "Failed: %d" COLOR_RESET "\n", tests_failed); \
+    printf(GREEN_TEXT("Passed: %d") "\n", tests_passed); \
+    printf(RED_TEXT("Failed: %d") "\n", tests_failed); \
     if (tests_failed == 0) { \
-        puts(COLOR_GREEN "All tests passed!" COLOR_RESET); \
+        puts(GREEN_TEXT("All tests passed!")); \
     } else { \
-        puts(COLOR_RED "Some tests failed." COLOR_RESET); \
+        puts(RED_TEXT("Some tests failed.")); \
     } \
 } while(0)
 
@@ -54,50 +59,49 @@ extern int tests_failed;
  */
 #define TEST_EXIT() (tests_failed == 0 ? EXIT_SUCCESS : EXIT_FAILURE)
 
-/**
- * @brief Assert that a condition is true
- */
-#define ASSERT_TRUE(condition, message) do { \
+/* ASSERTIONS */
+
+#define ASSERT(condition, message, diff) do { \
     tests_run++; \
     if (condition) { \
         tests_passed++; \
-        printf(COLOR_GREEN "PASS" COLOR_RESET ": %s\n", message); \
+        PASS(message); \
     } else { \
         tests_failed++; \
-        printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        puts("  Expected: true, Got: false"); \
+        FAIL(message); \
+        diff; \
     } \
 } while(0)
+
+#define LITERAL_DIFF(expected, actual) puts("  Expected: " expected ", Actual: " actual)
+#define STRING_DIFF(expected, actual) printf("  Expected: \"%s\", Actual: \"%s\"", expected, actual)
+#define VALUE_DIFF(format, type, expected, actual) printf("  Expected: " format ", Actual: " format "\n", (type)(expected), (type)(actual))
+#define INT_DIFF(expected, actual) VALUE_DIFF("%d", int, expected, actual)
+
+/**
+ * @brief Assert that a condition is true
+ */
+#define ASSERT_TRUE(condition, message) ASSERT(condition, message, LITERAL_DIFF("true", "false"))
 
 /**
  * @brief Assert that a condition is false
  */
-#define ASSERT_FALSE(condition, message) do { \
-    tests_run++; \
-    if (!(condition)) { \
-        tests_passed++; \
-        printf(COLOR_GREEN "PASS" COLOR_RESET ": %s\n", message); \
-    } else { \
-        tests_failed++; \
-        printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        puts("  Expected: false, Got: true"); \
-    } \
-} while(0)
+#define ASSERT_FALSE(condition, message) ASSERT(!(condition), message, LITERAL_DIFF("false", "true"))
+
+/**
+ * @brief Assert that a pointer is not NULL
+ */
+#define ASSERT_NOT_NULL(pointer, message) ASSERT((pointer) != NULL, message, LITERAL_DIFF("non-NULL pointer", "NULL"))
+
+/**
+ * @brief Assert that a pointer is NULL
+ */
+#define ASSERT_NULL(pointer, message) ASSERT((pointer) == NULL, message, LITERAL_DIFF("NULL pointer", "non-NULL"))
 
 /**
  * @brief Assert that two integers are equal
  */
-#define ASSERT_EQ(expected, actual, message) do { \
-    tests_run++; \
-    if ((expected) == (actual)) { \
-        tests_passed++; \
-        printf(COLOR_GREEN "PASS" COLOR_RESET ": %s\n", message); \
-    } else { \
-        tests_failed++; \
-        printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        printf("  Expected: %d, Got: %d\n", (int)(expected), (int)(actual)); \
-    } \
-} while(0)
+#define ASSERT_EQ(expected, actual, message) ASSERT((expected) == (actual), message, INT_DIFF(expected, actual))
 
 /**
  * @brief Assert that two integers are not equal
@@ -106,10 +110,10 @@ extern int tests_failed;
     tests_run++; \
     if ((not_expected) != (actual)) { \
         tests_passed++; \
-        printf(COLOR_GREEN "PASS" COLOR_RESET ": %s\n", message); \
+        PASS(message); \
     } else { \
         tests_failed++; \
-        printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
+        FAIL(message); \
         printf("  Expected NOT: %d, But got: %d\n", (int)(not_expected), (int)(actual)); \
     } \
 } while(0)
@@ -117,46 +121,6 @@ extern int tests_failed;
 /**
  * @brief Assert that two strings are equal
  */
-#define ASSERT_STR_EQ(expected, actual, message) do { \
-    tests_run++; \
-    if (strcmp((expected), (actual)) == 0) { \
-        tests_passed++; \
-        printf(COLOR_GREEN "PASS" COLOR_RESET ": %s\n", message); \
-    } else { \
-        tests_failed++; \
-        printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        printf("  Expected: \"%s\", Got: \"%s\"\n", (expected), (actual)); \
-    } \
-} while(0)
-
-/**
- * @brief Assert that a pointer is not NULL
- */
-#define ASSERT_NOT_NULL(pointer, message) do { \
-    tests_run++; \
-    if ((pointer) != NULL) { \
-        tests_passed++; \
-        printf(COLOR_GREEN "PASS" COLOR_RESET ": %s\n", message); \
-    } else { \
-        tests_failed++; \
-        printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        puts("  Expected: non-NULL pointer, Got: NULL"); \
-    } \
-} while(0)
-
-/**
- * @brief Assert that a pointer is NULL
- */
-#define ASSERT_NULL(pointer, message) do { \
-    tests_run++; \
-    if ((pointer) == NULL) { \
-        tests_passed++; \
-        printf(COLOR_GREEN "PASS" COLOR_RESET ": %s\n", message); \
-    } else { \
-        tests_failed++; \
-        printf(COLOR_RED "FAIL" COLOR_RESET ": %s\n", message); \
-        puts("  Expected: NULL pointer, Got: non-NULL"); \
-    } \
-} while(0)
+#define ASSERT_STR_EQ(expected, actual, message) ASSERT(!strcmp((expected), (actual)), message, STRING_DIFF(expected, actual))
 
 #endif /* TEST_H */
