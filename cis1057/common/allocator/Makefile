@@ -8,12 +8,14 @@ INCLUDES = -Iinclude -I../
 # Detect OS for cross-platform commands
 ifeq ($(OS),Windows_NT)
     MKDIR = if not exist "$@" mkdir "$@"
-    RMDIR = if exist "$(1)" rmdir /s /q "$(1)"
+    RMDIR = if exist "$(1)" rmdir /s /q "$(1)" 2>nul || echo.
     RM = del /q
+    EXE = .exe
 else
     MKDIR = mkdir -p $@
     RMDIR = rm -rf $(1)
     RM = rm -f
+    EXE =
 endif
 
 # Source and object directories
@@ -43,19 +45,29 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 
 # Build test executables
 $(BINDIR)/%: $(TESTDIR)/%.c $(OBJECTS) | $(BINDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) $< $(OBJECTS) -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $< $(OBJECTS) -o $@$(EXE)
 
 # Run specific tests
 test-allocator: $(BINDIR)/test_allocator
+ifeq ($(OS),Windows_NT)
+	$(BINDIR)\test_allocator.exe
+else
 	./$(BINDIR)/test_allocator
+endif
 
 # Run all tests
 test: $(TEST_BINARIES)
+ifeq ($(OS),Windows_NT)
+	@echo Running tests...
+	@.\$(BINDIR)\test_allocator.exe
+	@echo.
+else
 	@for test in $(TEST_BINARIES); do \
 		echo "Running $$test..."; \
 		./$$test; \
 		echo; \
 	done
+endif
 
 # Clean build artifacts
 clean:
@@ -66,4 +78,4 @@ clean:
 .PHONY: all test test-allocator clean
 
 # Dependencies
-$(BINDIR)/test_allocator: $(OBJDIR)/Allocator.o
+$(BINDIR)/test_allocator$(EXE): $(OBJDIR)/Allocator.o
