@@ -1,9 +1,6 @@
 /**
  * @file Allocator.c
- * @brief Next TDD iteration - implement basic allocation functionality
- * 
- * This implementation adds basic allocation to pass the basic_allocation tests
- * while keeping the stack behavior and other advanced features unimplemented.
+ * @brief Basic linear (stack-based) allocator
  */
 
 #include "Allocator.h"
@@ -26,7 +23,7 @@ Allocator *Allocator_new(void)
     Allocator *alloc = calloc(1, DEFAULT_CAPACITY);
     if (alloc) {
         alloc->head = (char *)(alloc + 1);
-        alloc->tail = (char *)alloc + DEFAULT_CAPACITY - sizeof(Allocator *);
+        alloc->tail = (char *)alloc + DEFAULT_CAPACITY;
     }
     return alloc;
 }
@@ -44,6 +41,7 @@ void Allocator_pop(Allocator *alloc, size_t size)
 {
     if (!(alloc && size)) return;   // Handle NULL allocator or 0 size
     if (alloc->head - (char *)alloc + sizeof(Allocator) < size) return; // Ensure available capacity
+    alloc->head -= size;
 }
 
 void Allocator_clear(Allocator *alloc)
