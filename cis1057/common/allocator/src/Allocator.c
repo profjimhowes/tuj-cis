@@ -28,7 +28,7 @@ Allocator *Allocator_new(void)
     return alloc;
 }
 
-void *Allocator_push(Allocator *alloc, size_t size)
+void *Allocator_push(Allocator *alloc, ptrdiff_t size)
 {
     if (!(alloc && size)) return NULL;  // Handle NULL allocator or 0 size
     if (alloc->tail - alloc->head < size) return NULL;  // Ensure available capacity
