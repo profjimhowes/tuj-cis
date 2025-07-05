@@ -4,7 +4,9 @@
  * 
  * This allocator provides a simple stack-based memory management system that
  * eliminates the need for individual object destructors by managing memory
- * in hierarchical lifetime scopes (program, session, turn, temporary).
+ * in hierarchical lifetime scopes.
+ * @see https://www.rfleury.com/p/untangling-lifetimes-the-arena-allocator
+ * @see https://nullprogram.com/blog/2023/09/27/
  */
 
 #ifndef ALLOCATOR_H
@@ -52,7 +54,7 @@ void *Allocator_push(Allocator *alloc, ptrdiff_t size);
  * @param allocator Allocator to deallocate from
  * @param size Number of bytes to deallocate (must match recent allocations)
  */
-void Allocator_pop(Allocator *alloc, size_t size);
+void Allocator_pop(Allocator *alloc, ptrdiff_t size);
 
 /**
  * @brief Reset allocator to empty state

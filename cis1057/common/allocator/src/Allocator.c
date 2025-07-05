@@ -1,6 +1,6 @@
 /**
  * @file Allocator.c
- * @brief Basic linear (stack-based) allocator
+ * @brief Basic linear stack-based allocator with fixed block size
  */
 
 #include "Allocator.h"
@@ -19,7 +19,7 @@ struct Allocator {
 
 Allocator *Allocator_new(void)
 {
-    /* Allocate memory for the structure plus storage */
+    // Allocate memory for the structure plus storage
     Allocator *alloc = calloc(1, DEFAULT_CAPACITY);
     if (alloc) {
         alloc->head = (char *)(alloc + 1);
@@ -30,17 +30,25 @@ Allocator *Allocator_new(void)
 
 void *Allocator_push(Allocator *alloc, ptrdiff_t size)
 {
-    if (!(alloc && size)) return NULL;  // Handle NULL allocator or 0 size
-    if (alloc->tail - alloc->head < size) return NULL;  // Ensure available capacity
+    // Handle NULL allocator or 0 size
+    if (!(alloc && size)) return NULL;
+
+    // Ensure available capacity
+    if (alloc->tail - alloc->head < size) return NULL;
+
     void *ptr = alloc->head;
     alloc->head += size;
     return ptr;
 }
 
-void Allocator_pop(Allocator *alloc, size_t size)
+void Allocator_pop(Allocator *alloc, ptrdiff_t size)
 {
-    if (!(alloc && size)) return;   // Handle NULL allocator or 0 size
-    if (alloc->head - (char *)alloc + sizeof(Allocator) < size) return; // Ensure available capacity
+    // Handle NULL allocator or 0 size
+    if (!(alloc && size)) return;
+
+    // Ensure available capacity
+    if (alloc->head - (char *)alloc < size + (ptrdiff_t)sizeof(Allocator)) return;
+
     alloc->head -= size;
 }
 

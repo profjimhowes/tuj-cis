@@ -3,7 +3,6 @@
  * @brief Comprehensive tests for the Allocator system
  * 
  * Tests both fixed-size and growable allocators through the common interface.
- * Uses TDD approach to define expected behavior before implementation.
  */
 
 #include <stdio.h>
@@ -35,7 +34,7 @@ static void test_performance_characteristics(void);
  */
 static int test_allocator_creation(void)
 {
-    printf("=== Testing Allocator Creation ===\n");
+    puts("=== Testing Allocator Creation ===");
     int initial_passed = tests_passed;
     
     /* Test successful creation */
@@ -64,7 +63,7 @@ static int test_allocator_creation(void)
  */
 static int test_basic_allocation(void)
 {
-    printf("=== Testing Basic Allocation ===\n");
+    puts("=== Testing Basic Allocation ===");
     int initial_passed = tests_passed;
     
     Allocator* alloc = Allocator_new();
@@ -115,7 +114,7 @@ static int test_basic_allocation(void)
  */
 static void test_allocation_alignment(void)
 {
-    printf("=== Testing Memory Alignment ===\n");
+    puts("=== Testing Memory Alignment ===");
     
     Allocator* alloc = Allocator_new();
     ASSERT_NOT_NULL(alloc, "Allocator created successfully");
@@ -149,7 +148,7 @@ static void test_allocation_alignment(void)
  */
 static void test_stack_behavior(void)
 {
-    printf("=== Testing Stack Behavior ===\n");
+    puts("=== Testing Stack Behavior ===");
     
     Allocator* alloc = Allocator_new();
     ASSERT_NOT_NULL(alloc, "Allocator created successfully");
@@ -188,7 +187,7 @@ static void test_stack_behavior(void)
  */
 static void test_clear_functionality(void)
 {
-    printf("=== Testing Clear Functionality ===\n");
+    puts("=== Testing Clear Functionality ===");
     
     Allocator* alloc = Allocator_new();
     ASSERT_NOT_NULL(alloc, "Allocator created successfully");
@@ -226,7 +225,7 @@ static void test_clear_functionality(void)
  */
 static void test_usage_tracking(void)
 {
-    printf("=== Testing Usage Tracking ===\n");
+    puts("=== Testing Usage Tracking ===");
     
     Allocator* alloc = Allocator_new();
     ASSERT_NOT_NULL(alloc, "Allocator created successfully");
@@ -264,7 +263,7 @@ static void test_usage_tracking(void)
  */
 static void test_error_conditions(void)
 {
-    printf("=== Testing Error Conditions ===\n");
+    puts("=== Testing Error Conditions ===");
     
     Allocator* alloc = Allocator_new();
     ASSERT_NOT_NULL(alloc, "Allocator created successfully");
@@ -305,7 +304,7 @@ static void test_error_conditions(void)
  */
 static void test_memory_patterns(void)
 {
-    printf("=== Testing Memory Patterns ===\n");
+    puts("=== Testing Memory Patterns ===");
     
     Allocator* alloc = Allocator_new();
     ASSERT_NOT_NULL(alloc, "Allocator created successfully");
@@ -347,7 +346,7 @@ static void test_memory_patterns(void)
  */
 static void test_performance_characteristics(void)
 {
-    printf("=== Testing Performance Characteristics ===\n");
+    puts("=== Testing Performance Characteristics ===");
     
     Allocator* alloc = Allocator_new();
     ASSERT_NOT_NULL(alloc, "Allocator created successfully");
@@ -391,27 +390,27 @@ int main(void)
 {
     TEST_INIT();
     
-    printf("Testing Allocator System\n");
-    printf("========================\n\n");
+    puts("Testing Allocator System");
+    puts("========================\n");
     
     /* Basic functionality tests - must pass for advanced tests to run */
     int creation_ok = test_allocator_creation();
     if (!creation_ok) {
-        printf("⚠️  Skipping advanced tests - allocator creation failed\n\n");
+        puts("⚠️  Skipping advanced tests - allocator creation failed\n");
         TEST_SUMMARY();
         return TEST_EXIT();
     }
     
     int basic_ok = test_basic_allocation();
     if (!basic_ok) {
-        printf("⚠️  Skipping advanced tests - basic allocation failed\n\n");
+        puts("⚠️  Skipping advanced tests - basic allocation failed\n");
         test_error_conditions();  /* Error conditions should always run */
         TEST_SUMMARY();
         return TEST_EXIT();
     }
     
     /* Advanced tests - only run if basic functionality works */
-    printf("✅ Basic tests passed - running advanced tests\n\n");
+    puts("✅ Basic tests passed - running advanced tests\n");
     test_allocation_alignment();
     test_stack_behavior();
     test_clear_functionality();
