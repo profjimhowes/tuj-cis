@@ -17,26 +17,31 @@ const void *const class(void) { \
 /**
  * Class description method initializers
  */
-#define MATCH_METHODS8(sel, obj, fun, mem, ...) MATCH_METHOD(sel, obj, fun, mem) else MATCH_METHODS7(sel, obj, fun, __VA_ARGS__)
-#define MATCH_METHODS7(sel, obj, fun, mem, ...) MATCH_METHOD(sel, obj, fun, mem) else MATCH_METHODS6(sel, obj, fun, __VA_ARGS__)
-#define MATCH_METHODS6(sel, obj, fun, mem, ...) MATCH_METHOD(sel, obj, fun, mem) else MATCH_METHODS5(sel, obj, fun, __VA_ARGS__)
-#define MATCH_METHODS5(sel, obj, fun, mem, ...) MATCH_METHOD(sel, obj, fun, mem) else MATCH_METHODS4(sel, obj, fun, __VA_ARGS__)
-#define MATCH_METHODS4(sel, obj, fun, mem, ...) MATCH_METHOD(sel, obj, fun, mem) else MATCH_METHODS3(sel, obj, fun, __VA_ARGS__)
-#define MATCH_METHODS3(sel, obj, fun, mem, ...) MATCH_METHOD(sel, obj, fun, mem) else MATCH_METHODS2(sel, obj, fun, __VA_ARGS__)
-#define MATCH_METHODS2(sel, obj, fun, mem, ...) MATCH_METHOD(sel, obj, fun, mem) else MATCH_METHOD(sel, obj, fun, __VA_ARGS__)
-#define MATCH_METHOD(sel, obj, fun, mem) if (sel == (void (*)(void))mem) { \
-    *(void (**)(void))&obj->mem = fun; \
+#define MATCH_METHODS8(obj, sel, pro, met, mem, ...) MATCH_METHOD(obj, sel, pro, met, mem) else MATCH_METHODS7(obj, sel, pro, met, __VA_ARGS__)
+#define MATCH_METHODS7(obj, sel, pro, met, mem, ...) MATCH_METHOD(obj, sel, pro, met, mem) else MATCH_METHODS6(obj, sel, pro, met, __VA_ARGS__)
+#define MATCH_METHODS6(obj, sel, pro, met, mem, ...) MATCH_METHOD(obj, sel, pro, met, mem) else MATCH_METHODS5(obj, sel, pro, met, __VA_ARGS__)
+#define MATCH_METHODS5(obj, sel, pro, met, mem, ...) MATCH_METHOD(obj, sel, pro, met, mem) else MATCH_METHODS4(obj, sel, pro, met, __VA_ARGS__)
+#define MATCH_METHODS4(obj, sel, pro, met, mem, ...) MATCH_METHOD(obj, sel, pro, met, mem) else MATCH_METHODS3(obj, sel, pro, met, __VA_ARGS__)
+#define MATCH_METHODS3(obj, sel, pro, met, mem, ...) MATCH_METHOD(obj, sel, pro, met, mem) else MATCH_METHODS2(obj, sel, pro, met, __VA_ARGS__)
+#define MATCH_METHODS2(obj, sel, pro, met, mem, ...) MATCH_METHOD(obj, sel, pro, met, mem) else MATCH_METHOD(obj, sel, pro, met, __VA_ARGS__)
+#define MATCH_METHOD(obj, sel, pro, met, mem) if (sel == (void (*)(void))mem) { \
+    obj->mem.selector = sel; \
+    obj->mem.implements = pro; \
+    obj->mem.method = met; \
 }
 #define MATCH_SELECTOR(a, b, c, d, e, f, g, h, i, ...) i
-#define MATCH_METHODS(sel, obj, fun, ...) MATCH_SELECTOR(__VA_ARGS__, \
+#define MATCH_METHODS(obj, sel, pro, met, ...) MATCH_SELECTOR(__VA_ARGS__, \
     MATCH_METHODS8, MATCH_METHODS7, MATCH_METHODS6, MATCH_METHODS5, \
     MATCH_METHODS4, MATCH_METHODS3, MATCH_METHODS2, MATCH_METHOD, \
-)(sel, obj, fun, __VA_ARGS__)
-#define INIT_METHODS(next_arg, obj, ...) do { \
+)(obj, sel, pro, met, __VA_ARGS__)
+#define INIT_METHODS(args, object, ...) do { \
     void (*selector)(); \
-    while (selector = next_arg) { \
-        void (*)() fun = next_arg; \
-        MATCH_METHODS(selector, obj, fun, __VA_ARGS__); \
+    void (*method)(); \
+    while (selector = va_arg(args, void (*)(void))) { \
+        assert(method = va_arg(args, void (*)(void))); \
+        const void *protocol = va_arg(args, const void *); \
+        if (protocol) cast(Protocol(), protocol); \
+        MATCH_METHODS(object, selector, protocol, method, __VA_ARGS__); \
     } \
 } while (0)
 
@@ -46,7 +51,7 @@ const void *const class(void) { \
 #define METACLASS_INIT(class, ...) static void *class##Class_init(void *self, va_list *app) { \
     self = super_init(class##Class(), self, app); \
     va_list ap = *app; \
-	INIT_METHODS(va_arg(ap, void (*)()), ((class##Class_t)self), __VA_ARGS__); \
+	INIT_METHODS(ap, ((class##Class_t)self), __VA_ARGS__); \
 	return self; \
 }
 
@@ -71,8 +76,8 @@ typedef struct Protocol {
 } Protocol_t;
 
 typedef struct method {
-    const Protocol_t *implements;
     void (*selector)(void);
+    const void *implements;
     void (*method)(void);
 } method_t;
 
