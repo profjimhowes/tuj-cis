@@ -5,18 +5,33 @@
 #include <stddef.h>
 #include <stdio.h>
 
-extern const void *Object;
+#include "Allocator.h"
+#include "static_mem.h"
 
-void *new(const void *class, ...);
+void *new(Allocator_t *mem, const void *class, ...);
 
-const void *classOf(const void *self);
-size_t sizeOf(const void *self);
+const void *Object(void);
+const void *Class(void);
+const void *Protocol(void);
 
+/**
+ * Static methods
+ */
+const void *getclass(const void *self);
+size_t getsize(const void *self);
+bool instanceof(const void *self, const void *class);
+bool extends(const void *self, const void *class);
+const void *implements(const void *self, const void *proto);
+void *cast(const void *class, const void *self);
+#define CAST(class, obj) ((class##_t *)cast(class, obj))
+#define CONST(class, obj) ((const class##_t *)cast(class, obj))
+
+/**
+ * Dynamic methods (selectors)
+ */
 void *init(void *self, va_list *app);
 int differ(const void *self, const void *b);
 int fput(const void *self, FILE *fp);
-
-extern const void *Class;
 
 const void *super(const void *self);
 
