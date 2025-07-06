@@ -1,6 +1,16 @@
 # CIS 1057: Computer programming in C
 Lecture notes, example code, and project files for introductory C programming course.
 
+## Environment setup
+
+### PowerShell script
+The following commands can be used to setup PowerShell to automatically locate your compiler and make programs.
+```bash
+$Env:Path += ';C:\TDM-GCC-64\bin'
+$Env:CC = 'gcc'
+Set-Alias -Name make -Value mingw32-make
+```
+
 ## Projects
 The projects are intended to mimic real-world C codebases at a level that is approachable for introductory students.
 ### Kabu
