@@ -12,14 +12,7 @@
  * Find the sum of all the multiples of 3 or 5 below 1000.
  */
 
-#define END 1000000000
-
-#define TIMER(code) do { \
-    double start = get_time(); \
-    { code } \
-    double elapsed = get_time() - start; \
-    printf("Elapsed time: %9.6lf seconds\n", elapsed); \
-} while(0)
+#define END 1000
 
 long long linear_sum(int end, int skip);
 
