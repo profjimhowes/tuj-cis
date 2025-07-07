@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "timer.h"
+#include "../../common/timer.h"
 
 /**
  * PROJECT EULER #1
@@ -12,53 +12,48 @@
  * Find the sum of all the multiples of 3 or 5 below 1000.
  */
 
-#define END 1000
+#define LIMIT 1000
+#define A 3
+#define B 5
 
-long long linear_sum(int end, int skip);
+long long linear_sum(long long end, int skip);
 
 int main(int argc, char *argv[]) {
-    long long sum = 0;
     // Approach 1: count through all integers, test each
-    TIMER(
-        for (int i = 0; i < END; i++) {
-            if (i % 3 == 0 || i % 5 == 0) {
+    long long sum = 0;
+    PRINT_ELAPSED(
+        for (int i = 0; i < LIMIT; i++) {
+            if (i % A == 0 || i % B == 0) {
                 sum += i;
             }
         }
     );
-    printf("Sum: %d\n", sum);
+    printf("Sum: %lld\n", sum);
 
     // Approach 2: Skip count through multiples, but subtract duplicates
     sum = 0;
-    TIMER(
-        for (int i = 0; i < END; i += 3) {
+    PRINT_ELAPSED(
+        for (int i = 0; i < LIMIT; i += A)
             sum += i;
-        }
-        for (int i = 0; i < END; i += 5) {
-            if (i % 3) {
+        for (int i = 0; i < LIMIT; i += B)
+            if (i % A)
                 sum += i;
-            }
-        }
     );
-    printf("Sum: %d\n", sum);
+    printf("Sum: %lld\n", sum);
 
     // Approach 3: Use math
-    TIMER(
-        // Sum multiples of 3
-        sum = linear_sum(END, 3);
-
-        // Then add sum of multiples of 5
-        sum += linear_sum(END, 5);
-
-        // Then remove duplicated values... which are multiples of 15
-        sum -= linear_sum(END, 15);
+    sum = 0;
+    PRINT_ELAPSED(
+        sum += linear_sum(LIMIT, A);  // Add multiples of 3
+        sum += linear_sum(LIMIT, B);  // Then add multiples of 5
+        sum -= linear_sum(LIMIT, A * B); // Finally remove multiples of 15 (= 3 * 5)
     );
-    printf("Sum: %d\n", sum);
+    printf("Sum: %lld\n", sum);
 
     return EXIT_SUCCESS;
 }
 
-long long linear_sum(int end, int skip) {
-    int k = (end - 1) / skip;
+long long linear_sum(long long end, int skip) {
+    long long k = (end - 1) / skip;
     return (k * (k + 1) / 2) * skip;
 }
