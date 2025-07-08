@@ -19,7 +19,7 @@
  * order of size, find the numerator of the fraction immediately to the left of 3/7.
  */
 
-#define D 100000
+#define D 1000000
 
 typedef struct {
     int numer;
@@ -46,26 +46,26 @@ int main(int argc, char *argv[]) {
     size_t length = D + 1 >> 1;
     Rational r = {1, length}, *p;
     set_double(&r);
-    Rational rats[length];
+    Rational *rats = calloc(length, sizeof(Rational));
     rats[0] = r;
-    RatHeap heap = {0};
-    heap_insert(&heap, rats);
+    RatHeap *heap = calloc(1, sizeof(RatHeap));
+    heap_insert(heap, rats);
     for (int n = 2, d; n < length; n++) {
         for (d = D; gcd(n, d) > 1; d--);
         rats[n - 1].numer = n;
         rats[n - 1].denom = d;
         set_double(&rats[n - 1]);
-        heap_insert(&heap, &rats[n - 1]);
+        heap_insert(heap, &rats[n - 1]);
     }
-    p = heap_remove(&heap);
+    p = heap_remove(heap);
     while (p->numer != 3 || p->denom != 7) {
         r = *p;
         if (p->as_double < 3 / 7.0) {
             while (gcd(p->numer, --p->denom) > 1);
             set_double(p);
-            heap_insert(&heap, p);
+            heap_insert(heap, p);
         }
-        p = heap_remove(&heap);
+        p = heap_remove(heap);
     }
     printf("Solution: ");
     print_rat(&r);
