@@ -17,33 +17,23 @@
 #define DIGITS 50
 
 int load_data(char *path, int lines, int length, char data[lines][length + 1]);
+void reverse(char *string, int length);
+void add_into(char *sum, char *addend);
 
 int main(int argc, char *argv[]) {
     char numbers[COUNT][DIGITS + 1];
+    char sum[DIGITS * 2] = {0};
     if (load_data(INPUT_FILE, COUNT, DIGITS, numbers)) return EXIT_FAILURE;
 
-    char sum[DIGITS * 2] = {0};
-    int place;
-    for (int row = 0; row < COUNT; row++) {
-        for (place = 0; place < DIGITS; place++) {
-            sum[place] += numbers[row][DIGITS - place - 1] - '0';
-            sum[place + 1] += sum[place] / 10;
-            sum[place] %= 10;
-        }
-        while (sum[place] > 9) {
-            sum[place + 1] += sum[place] / 10;
-            sum[place++] %= 10;
-        }
+    // Data loaded into numbers array, ready to work with
+    for (int i = 0; i < COUNT; i++) {
+        // reverse the row into little-endian
+        reverse(numbers[i], DIGITS);
+        // add it to running sum
+        add_into(sum, numbers[i]);
     }
-    for (place = sizeof(sum); !sum[--place];);
-    for (int i = 0; i < place; i++, place--) {
-        int temp = sum[i] + '0';
-        sum[i] = sum[place];
-        sum[place] = temp;
-    }
-    while (place >= 0) sum[place--] += '0';
-
-    puts(sum);
+    reverse(sum, strlen(sum));
+    printf("%.10s\n", sum); // print first 10 digits only
 
     return EXIT_SUCCESS;
 }
@@ -56,7 +46,7 @@ int load_data(char *path, int lines, int length, char data[lines][length + 1]) {
     }
 
     int count = 0;
-    char format[32];
+    char format[16];
     sprintf(format, "%%%d[0-9]", length + 1);
     for (char buffer[100]; count < lines && fgets(buffer, sizeof(buffer), file); count++) {
         if (sscanf(buffer, format, data[count]) != 1) {
@@ -67,4 +57,28 @@ int load_data(char *path, int lines, int length, char data[lines][length + 1]) {
     fclose(file);
 
     return 0;
+}
+
+void reverse(char *string, int length) {
+    for (int i = 0, j = length - 1; i < j; i++, j--) {
+        char temp = string[i];
+        string[i] = string[j];
+        string[j] = temp;
+    }
+}
+
+void add_into(char *sum, char *addend) {
+    for (int i = 0, carry = 0, add_flag = 1, sum_flag = 1; add_flag || sum_flag; i++) {
+        add_flag = add_flag && addend[i];
+        sum_flag = sum_flag && sum[i];
+        int subtotal = (add_flag ? addend[i] : '0') + carry - '0';
+        if (subtotal) {
+            sum[i] = (sum_flag ? sum[i] : '0') + subtotal;
+            carry = sum[i] > '9';
+            sum[i] -= carry * 10;
+        } else if (!add_flag) {
+            if (!sum_flag) sum[i] = 0; // Finished, insert null byte at end of sum if necessary
+            break;
+        } else if (!sum_flag) sum[i] = '0'; // More digits to add, extend sum with '0'
+    }
 }

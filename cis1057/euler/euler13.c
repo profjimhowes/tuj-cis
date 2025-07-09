@@ -17,12 +17,23 @@
 #define DIGITS 50
 
 int load_data(char *path, int lines, int length, char data[lines][length + 1]);
+void reverse(char *string, int length);
+void add_into(char *sum, char *addend);
 
 int main(int argc, char *argv[]) {
     char numbers[COUNT][DIGITS + 1];
+    char sum[DIGITS * 2] = {0};
     if (load_data(INPUT_FILE, COUNT, DIGITS, numbers)) return EXIT_FAILURE;
 
     // Data loaded into numbers array, ready to work with
+    for (int i = 0; i < COUNT; i++) {
+        // reverse the row into little-endian
+        reverse(numbers[i], DIGITS);
+        // add it to running sum
+        add_into(sum, numbers[i]);
+    }
+    reverse(sum, strlen(sum));
+    printf("%.10s\n", sum); // print first 10 digits only
 
     return EXIT_SUCCESS;
 }
@@ -46,4 +57,12 @@ int load_data(char *path, int lines, int length, char data[lines][length + 1]) {
     fclose(file);
 
     return 0;
+}
+
+void reverse(char *string, int length) {
+    // TODO: implement this
+}
+
+void add_into(char *sum, char *addend) {
+    // TODO: implement this
 }
