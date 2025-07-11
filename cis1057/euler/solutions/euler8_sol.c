@@ -16,34 +16,38 @@
  */
 
 #define INPUT_FILE "../data/euler8.txt"
-#define DIGITS 1000
-#define PRODUCT_LENGTH 13
+#define LENGTH 13
 
 int main(int argc, char *argv[]) {
+    // Open input file
     FILE *file = open_file(INPUT_FILE);
-    int number[DIGITS];
-    int *digit = number;
 
-    while ((*digit = fgetc(file)) != EOF) {
-        if (*digit >= '0' && *digit <= '9') {
-            *digit++ -= '0';
-        }
-    }
-    fclose(file);
+    // Read digits one character at a time and accumulate product
+    // Non-digit characters are ignored
+    int number[LENGTH];
+    long long max = 0, product = 1;
+    for (int i = 0, len = 0; (number[i] = fgetc(file)) != EOF;)
+        // Reset the product after a zero
+        if (number[i] == '0')
+            len = 0, product = 1;
 
-    long long product = 1, max = 0;
-    for (int i = 0, j = 0; i < DIGITS; i++, j++) {
-        if (number[i] == 0) {
-            j = 0, product = 1;
-        } else {
-            product *= number[i];
-            if (j >= 13) {
-                if (j > 13) product /= number[i - 13];
-                if (product > max) max = product;
+        // Otherwise convert to integer and multiply into product
+        else if (number[i] > '0' && number[i] <= '9') {
+            product *= number[i++] -= '0';
+            i %= LENGTH;
+
+            // Once target length is reached, update maximum
+            // and divide out last number from the sequence
+            if (++len >= LENGTH) {
+                max = product > max ? product : max;
+                product /= number[i];
             }
         }
-    }
-    printf("Maximum product: %lld\n", max);
 
+    // Close input file
+    fclose(file);
+
+    // Output answer and exit
+    printf("Maximum product: %lld\n", max);
     return EXIT_SUCCESS;
 }
