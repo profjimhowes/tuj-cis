@@ -1,3 +1,8 @@
+# Ignore all files with no extension (executables)
+*
+!*/
+!*.*
+
 # Prerequisites
 *.d
 
@@ -52,6 +57,7 @@ Mkfile.old
 dkms.conf
 
 # Claude Code
+.claude/
 CLAUDE.md
 
 # Build directories
