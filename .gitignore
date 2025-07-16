@@ -1,8 +1,3 @@
-# Ignore all files with no extension (executables)
-*
-!*/
-!*.*
-
 # Prerequisites
 *.d
 
