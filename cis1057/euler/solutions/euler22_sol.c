@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "utils/files.h"
+#include "../utils/files.h"
 
 /**
  * PROJECT EULER #22
@@ -23,9 +23,11 @@
 #define BUFFER_SIZE 1 << 16
 #define NAME_LIMIT 6000
 
+void swap(char **a, char **b);
+void insert(char **list, int index);
 void heap_float(char **heap, int index);
 void heap_sink(char **heap, int index, int limit);
-void swap(char **a, char **b);
+void counting_sort(int size, char *list[size]);
 
 int main(int argc, char *argv[]) {
     // Open input file
@@ -39,27 +41,51 @@ int main(int argc, char *argv[]) {
     for (int c; (c = fgetc(file)) != EOF;)
         if (names[n])
             if (c == '"') {
-                buffer[b++] = '\0';
-                heap_float(names, n++);
+                buffer[b++] = '\0'; n++;
+                //heap_float(names, n++);
+                //insert(names, n++);
             } else buffer[b++] = c;
         else if (c == '"') names[n] = &buffer[b];
 
     // Close input file
     fclose(file);
 
-    // Heap sort
+    /* Heap sort
     while (n > 0) {
         swap(&names[0], &names[--n]);
         heap_sink(names, 0, n);
-    }
+    }*/
+
+    // Counting sort
+    counting_sort(n, names);
 
     long long total = 0;
-    for (int i = 0; i < NAME_LIMIT && names[i]; i++)
-        printf("%s ", names[i]);
-    puts("");
+    for (int i = 0; i < NAME_LIMIT && names[i]; i++) {
+        int score = 0;
+        for (char *c = names[i]; *c; c++) score += *c - 'A' + 1;
+        total += score *= i + 1;
+        printf("%s = %d\n", names[i], score);
+    }
+    printf("Total score: %lld\n", total);
     return EXIT_SUCCESS;
 }
 
+// In-place string swap
+void swap(char **a, char **b) {
+    char *temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Progressive insertion sort
+void insert(char **list, int index) {
+    while (index-- > 0)
+        if (strcmp(list[index], list[index + 1]) > 0)
+            swap(&list[index], &list[index + 1]);
+        else break;
+}
+
+// Max-heap float operation
 void heap_float(char **heap, int index) {
     while (index > 0) {
         int parent = (index - 1) / 2;
@@ -70,6 +96,7 @@ void heap_float(char **heap, int index) {
     }
 }
 
+// Max-heap sink operation
 void heap_sink(char **heap, int index, int limit) {
     for (int child; (child = index * 2 + 1) < limit; index = child)
         if (strcmp(heap[child++], heap[index]) > 0)
@@ -81,8 +108,12 @@ void heap_sink(char **heap, int index, int limit) {
         else break;
 }
 
-void swap(char **a, char **b) {
-    char *temp = *a;
-    *a = *b;
-    *b = temp;
+#define R 26
+void counting_sort(int size, char *list[size]) {
+    int count[R + 1] = {0};
+    char *copy[size];
+    for (int i = 0; i < size; i++) count[*list[i] - 'A' + 1]++;
+    for (int i = 1; i < R; i++) count[i] += count[i - 1];
+    for (int i = 0; i < size; i++) copy[count[*list[i] - 'A']++] = list[i];
+    for (int i = 0; i < size; i++) list[i] = copy[i];
 }
