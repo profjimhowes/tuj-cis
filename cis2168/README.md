@@ -7,6 +7,11 @@
 
 ## Java and OOP review
 ### Java language and development tools
+- Java runtime
+- Basic syntax
+- Primitive types and reference types
+- Exceptions
+- Javadoc
 ### Object-oriented programming
 ### Type systems and generic programming
 
@@ -23,3 +28,4 @@
 ### Recursion
 ### Mergesort and quicksort
 - Make sure to use VisuAlgo to show sorting methods in action
+
