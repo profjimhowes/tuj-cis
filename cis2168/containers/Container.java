@@ -18,6 +18,12 @@ public interface Container<E> {
             int nextBound(int current, int required);
 
             // Built-in strategies
+            static int doubling(int current, int required) { return Math.max((int)(current * 2), required); }
+            static int golden(int current, int required) { return Math.max((int)(current * 1.5), required); }
+            static int exact(int current, int required) { return required; }
+            static int none(int current, int required) { return current; }
+
+            // Simple parameterized strategies
             static GrowthStrategy linear(int step) {
                 return (current, required) -> Math.max(current + step, required);
             }
@@ -25,10 +31,6 @@ public interface Container<E> {
             static GrowthStrategy geometric(double factor) {
                 return (current, required) -> Math.max((int)(current * factor), required);
             }
-            
-            static int doubling(int current, int required) { return Math.max((int)(current * 2), required); }
-            static int golden(int current, int required) { return Math.max((int)(current * 1.5), required); }
-            static int none(int current, int required) { return current; }
         }
     }
 }
