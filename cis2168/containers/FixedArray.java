@@ -16,6 +16,7 @@ permits ElasticArray {
     }
 
     @Override public boolean isEmpty() { return size() == 0; }
+    @Override public boolean isFull() { return true; }
     @Override public int size() { return contents.length; }
 
     @Override public <R> R get(int index, Function<? super E, R> reader) {
