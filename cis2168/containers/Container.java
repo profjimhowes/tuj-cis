@@ -3,15 +3,16 @@ package containers;
 import java.util.function.Function;
 
 public interface Container<E> {
-    boolean isEmpty();
-
     interface Queryable<E>  extends Container<E> { boolean contains(E element); }
+    
+    boolean isEmpty();
     interface Readable<E>   extends Container<E> { <R> R get(Function<? super E, R> reader); }
-    interface Insertable<E> extends Container<E> { void insert(E element); }
     interface Removable<E>  extends Container<E> { E remove(); }
+    
+    boolean isFull();
+    interface Insertable<E> extends Container<E> { void insert(E element); }
 
-    interface Bounded { boolean isFull(); }
-    interface Elastic extends Bounded {
+    interface Elastic extends Container<E> {
         void requireBound(int bound);
 
         @FunctionalInterface interface GrowthStrategy {
