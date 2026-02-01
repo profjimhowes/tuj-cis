@@ -6,7 +6,7 @@ public interface Container<E> {
     interface Queryable<E>  extends Container<E> { boolean contains(E element); }
     
     boolean isEmpty();
-    interface Readable<E>   extends Container<E> { <R> R get(Function<? super E, R> reader); }
+    interface Readable<E>   extends Container<E> { <R> R read(Function<? super E, R> reader); }
     interface Removable<E>  extends Container<E> { E remove(); }
     
     boolean isFull();
