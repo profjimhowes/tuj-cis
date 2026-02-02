@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.function.*;
 
 public sealed class FixedArray<E>
-implements Indexed.Writable<E>, Indexed.Swappable<E>
+implements Indexed.Readable<E>, Indexed.Writable<E>, Indexed.Swappable<E>
 permits ElasticArray {
     Object[] contents;
 
@@ -19,11 +19,11 @@ permits ElasticArray {
     @Override public boolean isFull() { return true; }
     @Override public int size() { return contents.length; }
 
-    @Override public <R> R get(int index, Function<? super E, R> reader) {
+    @Override public <R> R read(int index, Function<? super E, R> reader) {
         return reader.apply(restore(index));
     }
 
-    @Override public <R> R get(int index, int index2, BiFunction<? super E, ? super E, R> reader) {
+    @Override public <R> R read(int index, int index2, BiFunction<? super E, ? super E, R> reader) {
         return reader.apply(restore(index), restore(index2));
     }
 
