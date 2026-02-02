@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.function.*;
 
 public final class ElasticArray<E> extends FixedArray<E>
-implements Container.Elastic, Indexed.Insertable<E>, Indexed.Removable<E> {
+implements Container.Elastic<E>, Indexed.Insertable<E>, Indexed.Removable<E> {
     static final int DEFAULT_BOUND = 10;
     static final GrowthStrategy DEFAULT_STRATEGY = GrowthStrategy::golden;
 
@@ -40,15 +40,15 @@ implements Container.Elastic, Indexed.Insertable<E>, Indexed.Removable<E> {
 
     @Override public int size() { return size; }
 
-    @Override public <R> R get(int index, Function<? super E, R> reader) {
+    @Override public <R> R read(int index, Function<? super E, R> reader) {
         Objects.checkIndex(index, size);
-        return super.get(index, reader);
+        return super.read(index, reader);
     }
 
-    @Override public <R> R get(int index, int index2, BiFunction<? super E, ? super E, R> reader) {
+    @Override public <R> R read(int index, int index2, BiFunction<? super E, ? super E, R> reader) {
         Objects.checkIndex(index, size);
         Objects.checkIndex(index2, size);
-        return super.get(index, index2, reader);
+        return super.read(index, index2, reader);
     }
 
     @Override public E put(int index, E element) {
@@ -96,16 +96,29 @@ implements Container.Elastic, Indexed.Insertable<E>, Indexed.Removable<E> {
     }
 
     public static void main(String[] args) {
+        System.out.println("Geometric growth:");
         ElasticArray<Integer> arr = ElasticArray.using(GrowthStrategy::doubling);
-        for (int i = 0; i < 1000; i++) arr.append(i);
-        System.out.printf("1000 elements added, current size: %d\n", arr.size());
-        for (int i = 0; i < 9000; i++) arr.append(i);
-        System.out.printf("10000 elements added, current size: %d\n", arr.size());
-        arr = ElasticArray.using(GrowthStrategy::none);
-        System.out.println("Overflowing a bounded array should throw");
-        for (int i = 0; i < 20; i++) {
-            System.out.printf("Appending to size %d array...\n", arr.size());
-            arr.append(i);
-        }
+        runTest(50000, arr);
+        arr = ElasticArray.using(GrowthStrategy::doubling);
+        runTest(500000, arr);
+        arr = ElasticArray.using(GrowthStrategy::doubling);
+        runTest(2500000, arr);
+        System.out.println("Linear growth:");
+        arr = ElasticArray.using(GrowthStrategy.linear(DEFAULT_BOUND));
+        runTest(100000, arr);
+        arr = ElasticArray.using(GrowthStrategy.linear(DEFAULT_BOUND));
+        runTest(500000, arr);
+        arr = ElasticArray.using(GrowthStrategy.linear(DEFAULT_BOUND));
+        runTest(2500000, arr);
+    }
+
+    static void runTest(double cycles, ElasticArray<Integer> arr) {
+        long elapsed = System.nanoTime();
+        for (int i = 0; i < cycles; i++) arr.append(i);
+        elapsed = System.nanoTime() - elapsed;
+        System.out.printf(
+            "%.3f microseconds per insertion\n",
+            (double)elapsed / cycles / 1000
+        );
     }
 }
