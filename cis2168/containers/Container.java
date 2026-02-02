@@ -12,7 +12,7 @@ public interface Container<E> {
     boolean isFull();
     interface Insertable<E> extends Container<E> { void insert(E element); }
 
-    interface Elastic extends Container<E> {
+    interface Elastic<E> extends Container<E> {
         void requireBound(int bound);
 
         @FunctionalInterface interface GrowthStrategy {
