@@ -1,4 +1,5 @@
 import java.util.Objects;
+import java.util.Arrays;
 
 public interface List<E> {
     int size();
@@ -22,7 +23,7 @@ public interface List<E> {
 
     // List.Array: elastic array implementation
     public class Array<E> implements List<E> {
-        private static final DEFAULT_SIZE = 10;
+        private static final int DEFAULT_SIZE = 10;
         private Object[] array = new Object[DEFAULT_SIZE];
         private int size = 0;
 
