@@ -4,33 +4,27 @@ import java.util.Objects;
 import java.util.function.*;
 
 public sealed class FixedArray<E>
-implements Indexed.Readable<E>, Indexed.Writable<E>, Indexed.Swappable<E>
+implements List.Readable<E>, List.Writable<E>, List.Sortable<E>
 permits ElasticArray {
     Object[] contents;
 
     FixedArray(Object[] array) { contents = array; }
 
-    @SafeVarargs static <E> FixedArray<E> of(E... elements) {
-        for (E e : elements) Objects.requireNonNull(e, "null elements not permitted");
-        return new FixedArray<>(elements);
-    }
-
     @Override public boolean isEmpty() { return size() == 0; }
     @Override public boolean isFull() { return true; }
     @Override public int size() { return contents.length; }
 
+    public <R> R readFirst(Function<? super E, R> reader) { return read(0, reader); }
+    public <R> R readLast(Function<? super E, R> reader) { return read(size() - 1, reader); }
     @Override public <R> R read(int index, Function<? super E, R> reader) {
         return reader.apply(restore(index));
     }
 
-    @Override public <R> R read(int index, int index2, BiFunction<? super E, ? super E, R> reader) {
-        return reader.apply(restore(index), restore(index2));
-    }
-
-    @Override public E put(int index, E element) {
-        Objects.requireNonNull(element, "null elements not permitted");
+    public E writeFirst(Function<? super E, ? extends E> writer) { return write(0, writer); }
+    public E writeLast(Function<? super E, ? extends E> writer) { return write(size() - 1, writer); }
+    @Override public E write(int index, Function<? super E, ? extends E> writer) {
         E temp = restore(index);
-        contents[index] = element;
+        contents[index] = requireNonNull(writer.apply(temp));
         return temp;
     }
 

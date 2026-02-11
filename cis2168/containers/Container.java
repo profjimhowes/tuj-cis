@@ -1,18 +1,18 @@
 package containers;
 
-import java.util.function.Function;
+import java.util.function.*;
 
 public interface Container<E> {
-    interface Queryable<E>  extends Container<E> { boolean contains(E element); }
-    
     boolean isEmpty();
-    interface Readable<E>   extends Container<E> { <R> R read(Function<? super E, R> reader); }
-    interface Removable<E>  extends Container<E> { E remove(); }
-    
     boolean isFull();
-    interface Insertable<E> extends Container<E> { void insert(E element); }
 
-    interface Elastic<E> extends Container<E> {
+    interface Readable<E>   extends Container<E> { <R> R read(Function<? super E, R> reader); }
+    interface Writable<E>   extends Container<E> { E write(Function<? super E, ? extends E> writer); }
+    interface Insertable<E> extends Container<E> { void insert(E element); }
+    interface Removable<E>  extends Container<E> { E remove(); }
+
+    interface Sized<E> extends Container<E> { int size(); }
+    interface Elastic<E> extends Sized<E> {
         void requireBound(int bound);
 
         @FunctionalInterface interface GrowthStrategy {
@@ -32,6 +32,21 @@ public interface Container<E> {
             static GrowthStrategy geometric(double factor) {
                 return (current, required) -> Math.max((int)(current * factor), required);
             }
+
+            // Minimum bound
+            static GrowthStrategy withMinimum(int min, GrowthStrategy strategy) {
+                return (current, required) -> Math.max(min, strategy(current, required));
+            }
         }
+    }
+
+    /* Checks and assertions */
+    public static <E> E requireNonNull(E element) {
+        return Objects.requireNonNull(element, "null elements not permitted")
+    }
+
+    public static int requireNonNegative(int value, String name) {
+        if (value < 0) throw new IllegalArgumentException(name + " must be non-negative: " + value);
+        return value;
     }
 }

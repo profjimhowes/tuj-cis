@@ -4,34 +4,17 @@ import java.util.Objects;
 import java.util.Arrays;
 import java.util.function.*;
 
-public final class ElasticArray<E> extends FixedArray<E>
-implements Container.Elastic<E>, Indexed.Insertable<E>, Indexed.Removable<E> {
-    static final int DEFAULT_BOUND = 10;
-    static final GrowthStrategy DEFAULT_STRATEGY = GrowthStrategy::golden;
+public sealed class ElasticArray<E> extends FixedArray<E>
+implements Container.Elastic<E>, List.Insertable<E>, List.Removable<E>
+permits RingArray {
+    private static final Object[] EMPTY = {};
 
-    int size;
+    int size = 0;
     final GrowthStrategy strategy;
 
-    ElasticArray(int bound, GrowthStrategy strategy) { this(new Object[bound], 0, strategy); }
-    ElasticArray(Object[] array, int size, GrowthStrategy strategy) {
-        super(array); this.size = size; this.strategy = strategy;
-    }
-
-    static <E> ElasticArray<E> with(int bound) {
-        return new ElasticArray<>(requireNonNegative(bound, "bound"), DEFAULT_STRATEGY);
-    }
-
-    static <E> ElasticArray<E> using(GrowthStrategy strategy) {
-        return new ElasticArray<>(DEFAULT_BOUND, strategy);
-    }
-
-    static <E> ElasticArray<E> from(E[] array) {
-        for (E e : array) Objects.requireNonNull(e, "null elements not permitted");
-        return new ElasticArray<E>(array, array.length, DEFAULT_STRATEGY);
-    }
-
-    @SafeVarargs static <E> ElasticArray<E> of(E... elements) {
-        return from(elements);
+    private ElasticArray(Object[] array, int size, GrowthStrategy strategy) {
+        super(Objects.requireNonNullElse(array, EMPTY));
+        this.size = size; this.strategy = strategy;
     }
 
     @Override public boolean isFull() {
@@ -41,58 +24,54 @@ implements Container.Elastic<E>, Indexed.Insertable<E>, Indexed.Removable<E> {
     @Override public int size() { return size; }
 
     @Override public <R> R read(int index, Function<? super E, R> reader) {
-        Objects.checkIndex(index, size);
-        return super.read(index, reader);
+        return super.read(Objects.checkIndex(index, size), reader);
     }
 
-    @Override public <R> R read(int index, int index2, BiFunction<? super E, ? super E, R> reader) {
-        Objects.checkIndex(index, size);
-        Objects.checkIndex(index2, size);
-        return super.read(index, index2, reader);
+    @Override public E write(int index, Function<? super E, ? extends E> writer) {
+        return super.write(Objects.checkIndex(index, size), writer);
     }
 
-    @Override public E put(int index, E element) {
-        Objects.checkIndex(index, size);
-        return super.put(index, element);
-    }
+    /* Insertion methods */
 
-    @Override public void swap(int index, int index2) {
-        Objects.checkIndex(index, size);
-        Objects.checkIndex(index2, size);
-        super.swap(index, index2);
-    }
-
+    public void insertFirst(E element) { uncheckedInsert(0, requireNonNull(element)); }
+    public void insertLast(E element) { uncheckedInsert(size, requireNonNull(element)); }
     @Override public void insert(int index, E element) {
-        if (isFull()) throw new IllegalStateException("container is full");
-        Objects.checkIndex(index, size + 1);
-        Objects.requireNonNull(element, "null elements not permitted");
-        if (size + 1 > contents.length) grow();
+        uncheckedInsert(Objects.checkIndex(index, size + 1), requireNonNull(element));
+    }
+
+    private void uncheckedInsert(int index, E element) {
+        if (size + 1 > extend()) throw new IllegalStateException("container is full");
         System.arraycopy(contents, index, contents, index + 1, size++ - index);
         contents[index] = element;
     }
 
+    /* Removal methods */
+
+    public E removeFirst(E element) { return uncheckedRemove(0); }
+    public E removeLast(E element) { return uncheckedRemove(size - 1); }
     @Override public E remove(int index) {
+        return uncheckedRemove(Objects.checkIndex(index, size));
+    }
+
+    private E uncheckedRemove(int index, E element) {
         if (isEmpty()) throw new IllegalStateException("container is empty");
-        Objects.checkIndex(index, size);
         E element = restore(index);
         System.arraycopy(contents, index + 1, contents, index, --size - index);
         contents[size] = null;
         return element;
     }
 
-    public void requireBound(int bound) { if (bound > contents.length) grow(bound); }
-
-    private void grow() { grow(size + 1); }
-    private void grow(int minBound) {
-        final int newBound = strategy.nextBound(contents.length, minBound);
-        if (newBound > contents.length)
-            contents = Arrays.copyOf(contents, newBound);
+    @Override public void requireBound(int bound) { extend(bound); }
+    public void trimBound() {
+        if (isEmpty()) contents = EMPTY;
+        else if (size < contents.length) contents = Arrays.copyOf(contents, size);
     }
 
-    static int requireNonNegative(int value, String name) {
-        if (value < 0)
-            throw new IllegalArgumentException(name + " must be non-negative: " + value);
-        return value;
+    protected int extend() { return extend(size + 1); }
+    protected int extend(int bound) {
+        bound = bound > contents.length ? strategy.nextBound(contents.length, bound) : contents.length;
+        if (bound > contents.length) contents = Arrays.copyOf(contents, bound);
+        return contents.length;
     }
 
     public static void main(String[] args) {
@@ -120,5 +99,39 @@ implements Container.Elastic<E>, Indexed.Insertable<E>, Indexed.Removable<E> {
             "%.3f microseconds per insertion\n",
             (double)elapsed / cycles / 1000
         );
+    }
+
+    public static final class Builder<E> {
+        static final int DEFAULT_BOUND = 10;
+        static final GrowthStrategy DEFAULT_STRATEGY = GrowthStrategy.withMinimum(DEFAULT_BOUND, GrowthStrategy::golden);
+
+        private E[] data = null;
+        private int bound = DEFAULT_BOUND;
+        private GrowthStrategy strategy = DEFAULT_STRATEGY;
+
+        public Builder<E> with(int bound) { this.bound = requireNonNegative(bound, "bound"); return this; }
+        public Builder<E> using(GrowthStrategy strategy) { this.strategy = strategy; return this; }
+        public Builder<E> from(E[] data) { this.data = data; return this; }
+        @SafeVarargs public Builder<E> of(E... elements) { return from(elements); }
+
+        public <E> Stack<E> asStack() {
+            ElasticArray<E> base = build();
+            return new Stack<>() {
+                public boolean isEmpty()                           { return base.isEmpty(); }
+                public boolean isFull()                            { return base.isFull(); }
+                public <R> R   read(Function<? super E, R> reader) { return base.readLast(reader); }
+                public void    insert(E element)                   { base.insertLast(element); }
+                public E       remove()                            { return base.removeLast(); }
+            };
+        }
+
+        private ElasticArray<E> build() {
+            if (Objects.nonNull(data)) {
+                if (bound < data.length) throw new IllegalArgumentException("initial data exceeds bound");
+                for (E element : data) requireNonNull(element);
+                if (bound > data.length) data = Arrays.copyOf(data, bound);
+            }
+            return new ElasticArray<>(data, bound, strategy);
+        }
     }
 }
