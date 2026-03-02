@@ -201,7 +201,7 @@ public class Sorter<E extends Comparable<? super E>> {
         printStats("InsertionDX", array.length, sorter.compares, sorter.swaps);
         sorter.mergesort(Arrays.copyOf(array, array.length));
         printStats("Mergesort", array.length, sorter.compares, sorter.swaps);
-        sorter.quicksort(array);
+        sorter.quicksort(Arrays.copyOf(array, array.length));
         printStats("Quicksort", array.length, sorter.compares, sorter.swaps);
     }
 
@@ -228,7 +228,7 @@ public class Sorter<E extends Comparable<? super E>> {
         runTest("Random", array, sorter);
 
         for (int i = 0; i < size;) {
-            int step = (int)Math.min(Math.round(-Math.pow(size, 0.5) * Math.log(rand.nextDouble()) + 0.5), size - i);
+            int step = (int)Math.min(Math.round(-Math.pow(size, 0.8) * Math.log(rand.nextDouble()) + 0.5), size - i);
             Arrays.sort(array, i, i += step);
             if (rand.nextDouble() > 0.5) for (int j = i - step, k = i - 1; j < k;) {
                 int t = array[j]; array[j++] = array[k]; array[k--] = t;
