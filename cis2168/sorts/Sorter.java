@@ -129,6 +129,57 @@ public class Sorter<E extends Comparable<? super E>> {
         if (start < end) reverse(start + 1, end);
     }
 
+    public void mergesort(E[] array) {
+        mergesort(initialize(array), Arrays.copyOf(array, array.length), 0, array.length - 1);
+    }
+
+    private void mergesort(E[] array, E[] buffer, int start, int end) {
+        if (end - start < 1) return;
+        int mid = (start + end + 1) / 2;
+        mergesort(buffer, array, start, mid - 1);
+        mergesort(buffer, array, mid, end);
+        merge(array, buffer, start, mid, end);
+    }
+
+    private void merge(E[] array, E[] buffer, int start, int mid, int end) {
+        comparator = (i, j) -> buffer[i].compareTo(buffer[j]);
+        int left = start, right = mid;
+        for (int i = start; i <= end; i++) {
+            if (right > end) array[i] = buffer[left++];
+            else if (left >= mid) array[i] = buffer[right++];
+            else if (compare(left, right) <= 0)
+                array[i] = buffer[left++];
+            else array[i] = buffer[right++];
+        }
+    }
+
+    public void quicksort(E[] array) {
+        quicksort(initialize(array), 0, array.length - 1);
+    }
+
+    private void quicksort(E[] array, int start, int end) {
+        while (end - start > 0) {
+            int mid = partition(array, start, end);
+            if (mid - start - 1 < end - mid - 1) {
+                quicksort(array, start, mid - 1);
+                start = mid + 1;
+            } else {
+                quicksort(array, mid + 1, end);
+                end = mid - 1;
+            }
+        }
+    }
+
+    private int partition(E[] array, int start, int end) {
+        for (int i = start--; i < end; i++) {
+            if (compare(i, end) <= 0) {
+                swap(i, ++start);
+            }
+        }
+        swap(++start, end);
+        return start;
+    }
+
     private static void printHeader(String label, int size) {
         System.out.printf("%n%6s, N=%-8dcompare\\element   swap\\element%n", label, size);
         System.out.println("================================================");
@@ -136,6 +187,22 @@ public class Sorter<E extends Comparable<? super E>> {
 
     private static void printStats(String label, int size, long compares, long swaps) {
         System.out.printf("%-20s%10.1f%15.1f%n", label, (double)compares / (double)size, (double)swaps / (double)size);
+    }
+
+    private static void runTest(String label, Integer[] array, Sorter<Integer> sorter) {
+        printHeader(label, array.length);
+        sorter.selection(Arrays.copyOf(array, array.length));
+        printStats("Selection", array.length, sorter.compares, sorter.swaps);
+        sorter.bubble(Arrays.copyOf(array, array.length));
+        printStats("Bubble", array.length, sorter.compares, sorter.swaps);
+        sorter.insertion(Arrays.copyOf(array, array.length));
+        printStats("Insertion", array.length, sorter.compares, sorter.swaps);
+        sorter.insertionDX(Arrays.copyOf(array, array.length));
+        printStats("InsertionDX", array.length, sorter.compares, sorter.swaps);
+        sorter.mergesort(Arrays.copyOf(array, array.length));
+        printStats("Mergesort", array.length, sorter.compares, sorter.swaps);
+        sorter.quicksort(array);
+        printStats("Quicksort", array.length, sorter.compares, sorter.swaps);
     }
 
     public static void main(String[] args) {
@@ -148,57 +215,25 @@ public class Sorter<E extends Comparable<? super E>> {
         Integer[] array = new Integer[size];
 
         for (int i = 0; i < size; i++) array[i] = i;
-        printHeader("Sorted", size);
-        sorter.selection(array);
-        printStats("Selection", size, sorter.compares, sorter.swaps);
-        sorter.bubble(array);
-        printStats("Bubble", size, sorter.compares, sorter.swaps);
-        sorter.insertion(array);
-        printStats("Insertion", size, sorter.compares, sorter.swaps);
-        sorter.insertionDX(array);
-        printStats("InsertionDX", size, sorter.compares, sorter.swaps);
+        runTest("Sorted", array, sorter);
 
         for (int i = 0; i < size; i++) array[i] = size - i - 1;
-        printHeader("Revrsd", size);
-        sorter.selection(Arrays.copyOf(array, array.length));
-        printStats("Selection", size, sorter.compares, sorter.swaps);
-        sorter.bubble(Arrays.copyOf(array, array.length));
-        printStats("Bubble", size, sorter.compares, sorter.swaps);
-        sorter.insertion(Arrays.copyOf(array, array.length));
-        printStats("Insertion", size, sorter.compares, sorter.swaps);
-        sorter.insertionDX(array);
-        printStats("InsertionDX", size, sorter.compares, sorter.swaps);
+        runTest("Revrsd", array, sorter);
 
         Random rand = new Random();
         for (int i = 0; i < size; i++) {
             int j = rand.nextInt(i + 1);
             array[i] = array[j]; array[j] = i;
         }
-        printHeader("Random", size);
-        sorter.selection(Arrays.copyOf(array, array.length));
-        printStats("Selection", size, sorter.compares, sorter.swaps);
-        sorter.bubble(Arrays.copyOf(array, array.length));
-        printStats("Bubble", size, sorter.compares, sorter.swaps);
-        sorter.insertion(Arrays.copyOf(array, array.length));
-        printStats("Insertion", size, sorter.compares, sorter.swaps);
-        sorter.insertionDX(Arrays.copyOf(array, array.length));
-        printStats("InsertionDX", size, sorter.compares, sorter.swaps);
+        runTest("Random", array, sorter);
 
         for (int i = 0; i < size;) {
-            int step = (int)Math.min(Math.round(-Math.pow(size, 0.8) * Math.log(Math.random()) + 0.5), size - i);
+            int step = (int)Math.min(Math.round(-Math.pow(size, 0.5) * Math.log(rand.nextDouble()) + 0.5), size - i);
             Arrays.sort(array, i, i += step);
-            if (Math.random() > 0.5) for (int j = i - step, k = i - 1; j < k;) {
+            if (rand.nextDouble() > 0.5) for (int j = i - step, k = i - 1; j < k;) {
                 int t = array[j]; array[j++] = array[k]; array[k--] = t;
             }
         }
-        printHeader("Spiky", size);
-        sorter.selection(Arrays.copyOf(array, array.length));
-        printStats("Selection", size, sorter.compares, sorter.swaps);
-        sorter.bubble(Arrays.copyOf(array, array.length));
-        printStats("Bubble", size, sorter.compares, sorter.swaps);
-        sorter.insertion(Arrays.copyOf(array, array.length));
-        printStats("Insertion", size, sorter.compares, sorter.swaps);
-        sorter.insertionDX(array);
-        printStats("InsertionDX", size, sorter.compares, sorter.swaps);
+        runTest("Spiky", array, sorter);
     }
 }
