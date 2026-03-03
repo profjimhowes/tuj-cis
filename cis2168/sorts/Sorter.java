@@ -32,7 +32,7 @@ public class Sorter<E extends Comparable<? super E>> {
         while (i < j) swap(i++, j--);
     }
 
-    public boolean isSorted(E[] array, int start, int end) {
+    public boolean isSorted(int start, int end) {
         while (start < end)
             if (comparator.applyAsInt(start++, start) > 0)
                 return false;
@@ -43,8 +43,8 @@ public class Sorter<E extends Comparable<? super E>> {
      * 1. For i=0, find minimum of [i, size) and swap it with i.
      * 2. Increment i and repeat until i==end-1.
      */ 
-    public void selection(E[] array) { selection(initialize(array), 0, array.length - 1); }
-    private void selection(E[] array, int start, int end) {
+    public void selection(E[] array) { selection(0, initialize(array).length - 1); }
+    private void selection(int start, int end) {
         while (start < end)
             swap(start, imin(start++, end));
     }
@@ -61,12 +61,12 @@ public class Sorter<E extends Comparable<? super E>> {
      * 1. Bubble up from 0 to end-1.
      * 2. Decrement end and repeat if not sorted already.
      */ 
-    public void bubble(E[] array) { bubble(initialize(array), 0, array.length - 1); }
-    private void bubble(E[] array, int start, int end) {
-        while (start < end && !bubbleUp(array, start, end--));
+    public void bubble(E[] array) { bubble(0, initialize(array).length - 1); }
+    private void bubble(int start, int end) {
+        while (start < end && !bubbleUp(start, end--));
     }
 
-    private boolean bubbleUp(E[] array, int start, int end) {
+    private boolean bubbleUp(int start, int end) {
         boolean sorted = true;
         while (start < end)
             if (compare(start++, start) > 0) {
@@ -76,7 +76,7 @@ public class Sorter<E extends Comparable<? super E>> {
         return sorted;
     }
 
-    private boolean bubbleDown(E[] array, int start, int end) {
+    private boolean bubbleDown(int start, int end) {
         boolean sorted = true;
         while (start < end)
             if (compare(end--, end) < 0) {
@@ -90,8 +90,8 @@ public class Sorter<E extends Comparable<? super E>> {
      * 1. For i=1, insert element i into [0, i].
      * 2. Increment i and repeat until i=end-1.
      */ 
-    public void insertion(E[] array) { insertion(initialize(array), 0, array.length - 1); }
-    private void insertion(E[] array, int start, int end) {
+    public void insertion(E[] array) { insertion(0, initialize(array).length - 1); }
+    private void insertion(int start, int end) {
         for (int i = start; i < end; i++)
             insertDown(i + 1, start);
     }
@@ -110,15 +110,15 @@ public class Sorter<E extends Comparable<? super E>> {
      * 1. Bubble down once while detecting and reversing descending runs
      * 2. Perform insertion sort from i=1 with unchecked array bounds
      */ 
-    public void insertionDX(E[] array) { insertionDX(initialize(array), 0, array.length - 1); }
-    private void insertionDX(E[] array, int start, int end) {
-        bubbleDownRRD(array, start, end);
+    public void insertionDX(E[] array) { insertionDX(0, initialize(array).length - 1); }
+    private void insertionDX(int start, int end) {
+        bubbleDownRRD(start, end);
         while (start++ < end) insertDown(start);
     }
 
     private void insertDown(int i) { while (compare(i - 1, i) > 0) swap(i--, i); }
     private void insertUp(int i) { while (compare(i, i + 1) > 0) swap(i++, i); }
-    private void bubbleDownRRD(E[] array, int start, int end) {
+    private void bubbleDownRRD(int start, int end) {
         for (int i = end; start < i; i--) {
             if (i < end && compare(i - 1, i + 1) <= 0) {
                 reverse(i + 1, end);
@@ -133,15 +133,15 @@ public class Sorter<E extends Comparable<? super E>> {
      * 1. Recursively sort left and right halves
      * 2. Merge sorted halves
      */ 
-    public void mergesort(E[] array) {
-        mergesort(initialize(array), Arrays.copyOf(array, array.length), 0, array.length - 1);
+    public void mergeDown(E[] array) {
+        mergeDown(initialize(array), Arrays.copyOf(array, array.length), 0, array.length - 1);
     }
 
-    private void mergesort(E[] array, E[] buffer, int start, int end) {
+    private void mergeDown(E[] array, E[] buffer, int start, int end) {
         if (end - start < 1) return;
         int mid = (start + end + 1) / 2;
-        mergesort(buffer, array, start, mid - 1);
-        mergesort(buffer, array, mid, end);
+        mergeDown(buffer, array, start, mid - 1);
+        mergeDown(buffer, array, mid, end);
         merge(array, buffer, start, mid, end);
     }
 
@@ -157,26 +157,83 @@ public class Sorter<E extends Comparable<? super E>> {
         swaps += (end - start) / 2 + 1;
     }
 
+    /* Bottom-up (iterative) mergesort
+     * 1. Sort blocks of size n = 2
+     * 2. Merge pairs of blocks
+     * 3. Double n and repeat until n >= length / 2
+     */ 
+    public void mergeUp(E[] array) {
+        mergeUp(initialize(array), Arrays.copyOf(array, array.length), 0, array.length - 1);
+    }
+
+    private void mergeUp(E[] array, E[] buffer, int start, int end) {
+        for (int n = 1, swaps = 0; n < end - start + 1 || swaps % 2 == 1; n *= 2, swaps++) {
+            for (int i = start + n; i <= end; i += n + 1)
+                merge(array, buffer, i - n, i, Math.min(i += n - 1, end));
+            E[] t = array; array = buffer; buffer = t;
+        }
+    }
+
+    /* Bitonic sort (recursive)
+     * 1. Recursively sort left and right halves in opposite directions
+     * 2. Recursively merge halves using a bitonic partition
+     */
+    public void bitonicDown(E[] array) { bitonicDown(0, initialize(array).length - 1); }
+    private void bitonicDown(int start, int end) {
+        if (end - start < 1) return;
+        int mid = (end + start) / 2;
+        bitonicDown(start, mid);
+        bitonicDown(mid + 1, end);
+        if (compare(mid, end) > 0)
+            bitonicMerge(start, end, true);
+        else reverse(mid + 1, end);
+    }
+
+    private void bitonicMerge(int start, int end, boolean initial) {
+        if (end - start < 1) return;
+        int size = end - start + 1;
+        int left = start + size % 2, right = left + size / 2;
+        for (int i = left, j = initial ? end : right; i < right; i++, j += initial ? -1 : 1)
+            if (compare(i, j) > 0) swap(i, j);
+        bitonicMerge(left, right - 1, false);
+        bitonicMerge(right, end, false);
+        while (start < end && compare(start, start + 1) > 0)
+            swap(start++, start);
+    }
+
+    /* Bitonic sort (iterative)
+     */
+    public void bitonicUp(E[] array) { bitonicUp(0, initialize(array).length - 1); }
+    private void bitonicUp(int start, int end) {
+        int n = end - start + 1;
+        for (int k = 2; k < n * 2; k <<= 1)
+            for (int j = k; j > 0; j >>= 1)
+			    for (int i = 0; i < n; i++) {
+				    int ij = j == k ? i ^ j - 1 : i ^ j;
+                    if (i < ij && ij < n && compare(i, ij) > 0) swap(i, ij);
+                }
+    }
+
     /* Quicksort with tail-call loop optimization
      * 1. Partition array
      * 2. Recursively sort smaller partition
      * 3. Adjust bounds to reuse stack frame for larger partition
      */ 
-    public void quicksort(E[] array) { quicksort(initialize(array), 0, array.length - 1); }
-    private void quicksort(E[] array, int start, int end) {
+    public void quick(E[] array) { quick(0, initialize(array).length - 1); }
+    private void quick(int start, int end) {
         while (end - start > 0) {
-            int mid = partition(array, start, end);
+            int mid = partition(start, end);
             if (2 * mid < start + end) {
-                quicksort(array, start, mid - 1);
+                quick(start, mid - 1);
                 start = mid + 1;
             } else {
-                quicksort(array, mid + 1, end);
+                quick(mid + 1, end);
                 end = mid - 1;
             }
         }
     }
 
-    private int partition(E[] array, int start, int end) {
+    private int partition(int start, int end) {
         for (int i = start--; i < end; i++)
             if (compare(i, end) <= 0)
                 swap(i, ++start);
@@ -184,42 +241,15 @@ public class Sorter<E extends Comparable<? super E>> {
         return start;
     }
 
-    /* Bitonic sort
-     * 1. Recursively sort left and right halves in opposite directions
-     * 2. Recursively merge halves using a bitonic partition
-     */
-    public void bitonic(E[] array) { bitonic(0, initialize(array).length - 1, true); }
-    private void bitonic(int start, int end, boolean ascending) {
-        if (end - start < 1) return;
-        int mid = (end + start) / 2;
-        bitonic(start, mid, ascending);
-        bitonic(mid + 1, end, !ascending);
-        if (compare(mid, end) > 0 == ascending)
-            bitonicMerge(start, end, ascending);
-        else reverse(mid + 1, end);
-    }
-
-    private void bitonicMerge(int start, int end, boolean ascending) {
-        if (end - start < 1) return;
-        int size = end - start + 1;
-        int left = start + size % 2, right = left + size / 2;
-        for (int i = left, j = right; i < right; i++, j++)
-            if (compare(i, j) > 0 == ascending) swap(i, j);
-        bitonicMerge(left, right - 1, ascending);
-        bitonicMerge(right, end, ascending);
-        while (start < end && compare(start, start + 1) > 0 == ascending)
-            swap(start++, start);
-    }
-
     /* Comparative performance testing */
 
     private static void printHeader(String label, int size) {
-        System.out.printf("%n%6s, N=%-8dcompare\\element   swap\\element%n", label, size);
-        System.out.println("================================================");
+        System.out.printf("%n%-14sN=%-8dcompare\\element   swap\\element%n", label, size);
+        System.out.println("======================================================");
     }
 
     private static void printStats(String label, int size, long compares, long swaps) {
-        System.out.printf("%-20s%10.1f%15.1f%n", label, (double)compares / (double)size, (double)swaps / (double)size);
+        System.out.printf("%-26s%10.1f%15.1f%n", label, (double)compares / (double)size, (double)swaps / (double)size);
     }
 
     private static void runTest(String label, Integer[] array, Sorter<Integer> sorter) {
@@ -232,12 +262,16 @@ public class Sorter<E extends Comparable<? super E>> {
         printStats("Insertion", array.length, sorter.compares, sorter.swaps);
         sorter.insertionDX(Arrays.copyOf(array, array.length));
         printStats("InsertionDX", array.length, sorter.compares, sorter.swaps);
-        sorter.mergesort(Arrays.copyOf(array, array.length));
-        printStats("Mergesort", array.length, sorter.compares, sorter.swaps);
-        sorter.quicksort(Arrays.copyOf(array, array.length));
+        sorter.mergeDown(Arrays.copyOf(array, array.length));
+        printStats("Mergesort (recursive)", array.length, sorter.compares, sorter.swaps);
+        sorter.mergeUp(Arrays.copyOf(array, array.length));
+        printStats("Mergesort (iterative)", array.length, sorter.compares, sorter.swaps);
+        sorter.bitonicDown(Arrays.copyOf(array, array.length));
+        printStats("Bitonic (recursive)", array.length, sorter.compares, sorter.swaps);
+        sorter.bitonicUp(Arrays.copyOf(array, array.length));
+        printStats("Bitonic (iterative)", array.length, sorter.compares, sorter.swaps);
+        sorter.quick(Arrays.copyOf(array, array.length));
         printStats("Quicksort", array.length, sorter.compares, sorter.swaps);
-        sorter.bitonic(Arrays.copyOf(array, array.length));
-        printStats("Bitonic", array.length, sorter.compares, sorter.swaps);
     }
 
     public static void main(String[] args) {
@@ -253,7 +287,7 @@ public class Sorter<E extends Comparable<? super E>> {
         runTest("Sorted", array, sorter);
 
         for (int i = 0; i < size; i++) array[i] = size - i - 1;
-        runTest("Revrsd", array, sorter);
+        runTest("Reversed", array, sorter);
 
         Random rand = new Random();
         for (int i = 0; i < size; i++) {
@@ -270,8 +304,5 @@ public class Sorter<E extends Comparable<? super E>> {
             }
         }
         runTest("Spiky", array, sorter);
-
-        //sorter.bitonic(array);
-        //System.out.println(Arrays.toString(array));
     }
 }
