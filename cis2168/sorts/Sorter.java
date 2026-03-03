@@ -129,6 +129,10 @@ public class Sorter<E extends Comparable<? super E>> {
         if (start < end) reverse(start + 1, end);
     }
 
+    /* Top-down (recursive) mergesort
+     * 1. Recursively sort left and right halves
+     * 2. Merge sorted halves
+     */ 
     public void mergesort(E[] array) {
         mergesort(initialize(array), Arrays.copyOf(array, array.length), 0, array.length - 1);
     }
@@ -143,24 +147,26 @@ public class Sorter<E extends Comparable<? super E>> {
 
     private void merge(E[] array, E[] buffer, int start, int mid, int end) {
         comparator = (i, j) -> buffer[i].compareTo(buffer[j]);
-        int left = start, right = mid;
-        for (int i = start; i <= end; i++) {
-            if (right > end) array[i] = buffer[left++];
-            else if (left >= mid) array[i] = buffer[right++];
-            else if (compare(left, right) <= 0)
-                array[i] = buffer[left++];
-            else array[i] = buffer[right++];
-        }
+        if (compare(mid - 1, mid) > 0) {
+            int left = start, right = mid;
+            for (int i = start; i <= end; i++)
+                if (right > end) array[i] = buffer[left++];
+                else if (left >= mid || compare(left, right) > 0) array[i] = buffer[right++];
+                else array[i] = buffer[left++];
+        } else System.arraycopy(buffer, start, array, start, end - start + 1);
+        swaps += (end - start) / 2 + 1;
     }
 
-    public void quicksort(E[] array) {
-        quicksort(initialize(array), 0, array.length - 1);
-    }
-
+    /* Quicksort with tail-call loop optimization
+     * 1. Partition array
+     * 2. Recursively sort smaller partition
+     * 3. Adjust bounds to reuse stack frame for larger partition
+     */ 
+    public void quicksort(E[] array) { quicksort(initialize(array), 0, array.length - 1); }
     private void quicksort(E[] array, int start, int end) {
         while (end - start > 0) {
             int mid = partition(array, start, end);
-            if (mid - start - 1 < end - mid - 1) {
+            if (2 * mid < start + end) {
                 quicksort(array, start, mid - 1);
                 start = mid + 1;
             } else {
@@ -171,14 +177,41 @@ public class Sorter<E extends Comparable<? super E>> {
     }
 
     private int partition(E[] array, int start, int end) {
-        for (int i = start--; i < end; i++) {
-            if (compare(i, end) <= 0) {
+        for (int i = start--; i < end; i++)
+            if (compare(i, end) <= 0)
                 swap(i, ++start);
-            }
-        }
         swap(++start, end);
         return start;
     }
+
+    /* Bitonic sort
+     * 1. Recursively sort left and right halves in opposite directions
+     * 2. Recursively merge halves using a bitonic partition
+     */
+    public void bitonic(E[] array) { bitonic(0, initialize(array).length - 1, true); }
+    private void bitonic(int start, int end, boolean ascending) {
+        if (end - start < 1) return;
+        int mid = (end + start) / 2;
+        bitonic(start, mid, ascending);
+        bitonic(mid + 1, end, !ascending);
+        if (compare(mid, end) > 0 == ascending)
+            bitonicMerge(start, end, ascending);
+        else reverse(mid + 1, end);
+    }
+
+    private void bitonicMerge(int start, int end, boolean ascending) {
+        if (end - start < 1) return;
+        int size = end - start + 1;
+        int left = start + size % 2, right = left + size / 2;
+        for (int i = left, j = right; i < right; i++, j++)
+            if (compare(i, j) > 0 == ascending) swap(i, j);
+        bitonicMerge(left, right - 1, ascending);
+        bitonicMerge(right, end, ascending);
+        while (start < end && compare(start, start + 1) > 0 == ascending)
+            swap(start++, start);
+    }
+
+    /* Comparative performance testing */
 
     private static void printHeader(String label, int size) {
         System.out.printf("%n%6s, N=%-8dcompare\\element   swap\\element%n", label, size);
@@ -203,6 +236,8 @@ public class Sorter<E extends Comparable<? super E>> {
         printStats("Mergesort", array.length, sorter.compares, sorter.swaps);
         sorter.quicksort(Arrays.copyOf(array, array.length));
         printStats("Quicksort", array.length, sorter.compares, sorter.swaps);
+        sorter.bitonic(Arrays.copyOf(array, array.length));
+        printStats("Bitonic", array.length, sorter.compares, sorter.swaps);
     }
 
     public static void main(String[] args) {
@@ -235,5 +270,8 @@ public class Sorter<E extends Comparable<? super E>> {
             }
         }
         runTest("Spiky", array, sorter);
+
+        //sorter.bitonic(array);
+        //System.out.println(Arrays.toString(array));
     }
 }
