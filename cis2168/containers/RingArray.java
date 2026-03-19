@@ -50,7 +50,7 @@ public final class RingArray<E> extends ElasticArray<E> {
     }
 
     @Override protected int extend(int bound) {
-        if (contents.length < super.extend(bound) && first > 0) {
+        if (contents.length < super.extend(bound) && first > 0)
             if (size - first > last) {
                 System.arraycopy(contents, 0, contents, size, last);
                 Arrays.fill(contents, 0, last, null);
@@ -60,7 +60,6 @@ public final class RingArray<E> extends ElasticArray<E> {
                 Arrays.fill(contents, first, size, null);
                 first += contents.length - size;
             }
-        }
         return contents.length;
     }
 }

@@ -12,6 +12,7 @@ public class OpenHashTable<E> {
          */
         int probe(int hash, int attempt, int size);
 
+        /* Static probes: most common strategies */
         public static int sequential(int hash, int attempt, int size) {
             return (hash + attempt) % size;
         }
@@ -29,6 +30,7 @@ public class OpenHashTable<E> {
             return (hash + step * attempt) % size;
         }
 
+        /* Parameterized probes */
         public static ProbeStrategy linear(int c) {
             if (c == 0) throw new IllegalArgumentException("probe step cannot be 0");
             return (hash, attempt, size) -> (hash + c * attempt) % size;
