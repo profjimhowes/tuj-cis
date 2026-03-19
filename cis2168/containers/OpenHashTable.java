@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-public class OpenTable<E> {
+public class OpenHashTable<E> {
     @FunctionalInterface public static interface ProbeStrategy {
         /**
          * Compute the table index for the given probe attempt.
@@ -52,8 +52,8 @@ public class OpenTable<E> {
     private int size, entries, ghosts;
     private final double maxOccupancy;
 
-    public OpenTable() { this(DEFAULT_STRATEGY, DEFAULT_SIZE, DEFAULT_MAX_OCCUPANCY); }
-    public OpenTable(ProbeStrategy prober, int size, double maxOccupancy) {
+    public OpenHashTable() { this(DEFAULT_STRATEGY, DEFAULT_SIZE, DEFAULT_MAX_OCCUPANCY); }
+    public OpenHashTable(ProbeStrategy prober, int size, double maxOccupancy) {
         if (size < 1) throw new IllegalArgumentException("size must be > 0");
         if (maxOccupancy <= 0 || maxOccupancy >= 1)
             throw new IllegalArgumentException("maxOccupancy must be between 0.0 and 1.0");
@@ -121,7 +121,7 @@ public class OpenTable<E> {
     }
 
     public static void main(String[] args) {
-        OpenTable<String> stable = new OpenTable<>();
+        OpenHashTable<String> stable = new OpenHashTable<>();
         stable.insert("Hello");
         stable.insert("World");
         System.out.printf("Occupancy: %.3f%n", stable.occupancy());
