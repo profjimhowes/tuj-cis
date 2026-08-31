@@ -1,137 +1,107 @@
-package containers;
-
-import java.util.Objects;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.*;
 
-public sealed class ElasticArray<E> extends FixedArray<E>
-implements Container.Elastic<E>, List.Insertable<E>, List.Removable<E>
-permits RingArray {
-    private static final Object[] EMPTY = {};
+public final class ElasticArray<T> {
+    private static final int DEFAULT_BOUND = 16 + 1;
+    private static final GrowthStrategy DEFAULT_STRATEGY = GrowthStrategy::doubling;
 
-    int size = 0;
-    final GrowthStrategy strategy;
+    private T[] contents;
+    private GrowthStrategy strategy;
+    private int count = 0;
 
-    private ElasticArray(Object[] array, int size, GrowthStrategy strategy) {
-        super(Objects.requireNonNullElse(array, EMPTY));
-        this.size = size; this.strategy = strategy;
+    // Constructors
+
+    public ElasticArray() { this(DEFAULT_BOUND); }
+    public ElasticArray(int bound) { this(bound, DEFAULT_STRATEGY); }
+
+    @SuppressWarnings("unchecked")
+    public ElasticArray(int bound, GrowthStrategy strategy) {
+        if (bound < 1) throw new IllegalArgumentException("initial bound must be positive");
+        contents = (T[]) new Object[bound];
+        this.strategy = Objects.requireNonNull(strategy);
     }
 
-    @Override public boolean isFull() {
-        return size >= contents.length && strategy.nextBound(size, size + 1) <= size;
+    // Size and bounds methods
+
+    private int nextBound(int required) { return strategy.nextBound(contents.length, required); }
+
+    public int size()        { return count; }
+    public boolean isEmpty() { return count == 0; }
+    public boolean isFull()  { return count == contents.length && count >= nextBound(count + 1); }
+
+    public void expand(int required) {
+        int newBound = nextBound(required);
+        if (newBound > contents.length) contents = Arrays.copyOf(contents, newBound);
+        else throw new IllegalStateException("unable to expand");
     }
 
-    @Override public int size() { return size; }
-
-    @Override public <R> R read(int index, Function<? super E, R> reader) {
-        return super.read(Objects.checkIndex(index, size), reader);
+    public void shrink(int minimum) {
+        int newBound = Math.max(count, minimum);
+        if (newBound < contents.length) contents = Arrays.copyOf(contents, newBound);
     }
 
-    @Override public E write(int index, Function<? super E, ? extends E> writer) {
-        return super.write(Objects.checkIndex(index, size), writer);
+    // Access methods
+
+    private T get(int index) { return contents[Objects.checkIndex(index, count)]; }
+    public Accessor<T> access(int index) { return new Accessor<T>() {
+        @Override public void accept(Consumer<T> c)          { c.accept(get(index)); }
+        @Override public boolean test(Predicate<T> p)        { return p.test(get(index)); }
+        @Override public int apply(ToIntFunction<T> f)       { return f.applyAsInt(get(index)); }
+        @Override public long apply(ToLongFunction<T> f)     { return f.applyAsLong(get(index)); }
+        @Override public double apply(ToDoubleFunction<T> f) { return f.applyAsDouble(get(index)); }
+        @Override public <R> R apply(Function<T, R> f)       { return f.apply(get(index)); }
+    }; }
+
+    // Insertion and removal methods
+
+    public void insertFirst(T thing) { uncheckedInsert(0, Objects.requireNonNull(thing)); }
+    public void insertLast(T thing) { uncheckedInsert(count, Objects.requireNonNull(thing)); }
+    public void insert(int index, T thing) {
+        uncheckedInsert(Objects.checkIndex(index, count + 1), Objects.requireNonNull(thing));
     }
 
-    /* Insertion methods */
-
-    public void insertFirst(E element) { uncheckedInsert(0, requireNonNull(element)); }
-    public void insertLast(E element) { uncheckedInsert(size, requireNonNull(element)); }
-    @Override public void insert(int index, E element) {
-        uncheckedInsert(Objects.checkIndex(index, size + 1), requireNonNull(element));
+    private void uncheckedInsert(int index, T thing) {
+        if (count == contents.length) expand(count + 1);
+        System.arraycopy(contents, index, contents, index + 1, count++ - index);
+        contents[index] = thing;
     }
 
-    private void uncheckedInsert(int index, E element) {
-        if (size + 1 > extend()) throw new IllegalStateException("container is full");
-        System.arraycopy(contents, index, contents, index + 1, size++ - index);
-        contents[index] = element;
+    public T removeFirst() { return remove(0); }
+    public T removeLast() { return remove(count - 1); }
+    public T remove(int index) { 
+        T thing = get(index);
+        System.arraycopy(contents, index + 1, contents, index, count - index - 1);
+        contents[--count] = null;
+        return thing;
     }
 
-    /* Removal methods */
+    // Growth strategy determines if, and by how much, the array will expand when full
+    @FunctionalInterface public static interface GrowthStrategy {
+        int nextBound(int current, int required);
 
-    public E removeFirst(E element) { return uncheckedRemove(0); }
-    public E removeLast(E element) { return uncheckedRemove(size - 1); }
-    @Override public E remove(int index) {
-        return uncheckedRemove(Objects.checkIndex(index, size));
-    }
+        // Built-in strategies
+        static int doubling(int current, int required) { return Math.max(current <<< 1, required); }
+        static int golden(int current, int required) { return Math.max(current + current >>> 1, required); }
+        static int exact(int current, int required) { return Math.max(current, required); }
+        static int none(int current, int required) { return current; }
 
-    private E uncheckedRemove(int index, E element) {
-        if (isEmpty()) throw new IllegalStateException("container is empty");
-        E element = restore(index);
-        System.arraycopy(contents, index + 1, contents, index, --size - index);
-        contents[size] = null;
-        return element;
-    }
-
-    @Override public void requireBound(int bound) { extend(bound); }
-    public void trimBound() {
-        if (isEmpty()) contents = EMPTY;
-        else if (size < contents.length) contents = Arrays.copyOf(contents, size);
-    }
-
-    protected int extend() { return extend(size + 1); }
-    protected int extend(int bound) {
-        bound = bound > contents.length ? strategy.nextBound(contents.length, bound) : contents.length;
-        if (bound > contents.length) contents = Arrays.copyOf(contents, bound);
-        return contents.length;
-    }
-
-    public static void main(String[] args) {
-        System.out.println("Geometric growth:");
-        ElasticArray<Integer> arr = ElasticArray.using(GrowthStrategy::doubling);
-        runTest(50000, arr);
-        arr = ElasticArray.using(GrowthStrategy::doubling);
-        runTest(500000, arr);
-        arr = ElasticArray.using(GrowthStrategy::doubling);
-        runTest(2500000, arr);
-        System.out.println("Linear growth:");
-        arr = ElasticArray.using(GrowthStrategy.linear(DEFAULT_BOUND));
-        runTest(100000, arr);
-        arr = ElasticArray.using(GrowthStrategy.linear(DEFAULT_BOUND));
-        runTest(500000, arr);
-        arr = ElasticArray.using(GrowthStrategy.linear(DEFAULT_BOUND));
-        runTest(2500000, arr);
-    }
-
-    static void runTest(double cycles, ElasticArray<Integer> arr) {
-        long elapsed = System.nanoTime();
-        for (int i = 0; i < cycles; i++) arr.append(i);
-        elapsed = System.nanoTime() - elapsed;
-        System.out.printf(
-            "%.3f microseconds per insertion\n",
-            (double)elapsed / cycles / 1000
-        );
-    }
-
-    public static final class Builder<E> {
-        static final int DEFAULT_BOUND = 10;
-        static final GrowthStrategy DEFAULT_STRATEGY = GrowthStrategy.withMinimum(DEFAULT_BOUND, GrowthStrategy::golden);
-
-        private E[] data = null;
-        private int bound = DEFAULT_BOUND;
-        private GrowthStrategy strategy = DEFAULT_STRATEGY;
-
-        public Builder<E> with(int bound) { this.bound = requireNonNegative(bound, "bound"); return this; }
-        public Builder<E> using(GrowthStrategy strategy) { this.strategy = strategy; return this; }
-        public Builder<E> from(E[] data) { this.data = data; return this; }
-        @SafeVarargs public Builder<E> of(E... elements) { return from(elements); }
-
-        public <E> Stack<E> asStack() {
-            ElasticArray<E> base = build();
-            return new Stack<>() {
-                public boolean isEmpty()                           { return base.isEmpty(); }
-                public boolean isFull()                            { return base.isFull(); }
-                public <R> R   read(Function<? super E, R> reader) { return base.readLast(reader); }
-                public void    insert(E element)                   { base.insertLast(element); }
-                public E       remove()                            { return base.removeLast(); }
-            };
+        // Simple parameterized strategies
+        static GrowthStrategy linear(int step) {
+            return (current, required) -> Math.max(current + step, required);
         }
 
-        private ElasticArray<E> build() {
-            if (Objects.nonNull(data)) {
-                if (bound < data.length) throw new IllegalArgumentException("initial data exceeds bound");
-                for (E element : data) requireNonNull(element);
-                if (bound > data.length) data = Arrays.copyOf(data, bound);
-            }
-            return new ElasticArray<>(data, bound, strategy);
+        static GrowthStrategy geometric(double factor) {
+            return (current, required) -> Math.max((int)(current * factor), required);
+        }
+
+        // Combinators
+        static GrowthStrategy withMinimum(int min, GrowthStrategy strategy) {
+            return (current, required) -> Math.max(min, strategy.nextBound(current, required));
+        }
+
+        static GrowthStrategy withMaximum(int max, GrowthStrategy strategy) {
+            return (current, required) -> Math.min(max, strategy.nextBound(current, required));
         }
     }
 }
